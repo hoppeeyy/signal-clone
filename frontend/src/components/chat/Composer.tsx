@@ -80,7 +80,7 @@ export const Composer = ({ conversation, replyingTo, onCancelReply }: ComposerPr
     try {
       await fetchApi(`/conversations/${conversation.id}/read`, { method: 'POST' });
       markConversationRead(conversation.id);
-    } catch (err) {
+    } catch {
       toast('Failed to mark chat as read', 'error');
     }
   }, [conversation.id, markConversationRead, toast]);
@@ -121,7 +121,7 @@ export const Composer = ({ conversation, replyingTo, onCancelReply }: ComposerPr
           setPendingAttachments(prev => prev.map(p => 
             p.id === attachment.id ? { ...p, progress: 100, attachmentId: resp.id } : p
           ));
-        } catch (e) {
+        } catch {
           setPendingAttachments(prev => prev.map(p => 
             p.id === attachment.id ? { ...p, error: 'Invalid response' } : p
           ));
@@ -359,7 +359,7 @@ export const Composer = ({ conversation, replyingTo, onCancelReply }: ComposerPr
       }, 10000);
     } else {
       try {
-        const payload: any = { body, message_type: attachmentsToSend.length > 0 ? 'attachment' : 'text', reply_to_id: replyingTo?.id };
+        const payload: Record<string, unknown> = { body, message_type: attachmentsToSend.length > 0 ? 'attachment' : 'text', reply_to_id: replyingTo?.id };
         if (attachmentsToSend.length > 0) {
           payload.attachment_ids = attachmentsToSend.map(a => a.attachmentId).filter(Boolean);
         }

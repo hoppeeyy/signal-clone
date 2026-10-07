@@ -5,7 +5,7 @@ import { fetchApi } from '@/lib/api';
 import { Modal } from '@/components/ui/Modal';
 import { Avatar } from '@/components/ui/Avatar';
 import { Message, MessageReceipt } from '@/lib/types';
-import { Check, CheckCheck } from 'lucide-react';
+import { CheckCheck } from 'lucide-react';
 import { useToast } from '@/components/ui/Toast';
 
 interface MessageInfoModalProps {
@@ -31,7 +31,7 @@ export const MessageInfoModal = ({ isOpen, onClose, message }: MessageInfoModalP
           setLoading(true);
           const data = await fetchApi<ReceiptWithUser[]>(`/messages/${message.id}/receipts`);
           setReceipts(data);
-        } catch (err) {
+        } catch {
           toast('Failed to load message info', 'error');
         } finally {
           setLoading(false);
@@ -39,7 +39,7 @@ export const MessageInfoModal = ({ isOpen, onClose, message }: MessageInfoModalP
       };
       loadReceipts();
     }
-  }, [isOpen, message.id]);
+  }, [isOpen, message.id, toast]);
 
   return (
     <Modal isOpen={isOpen} onClose={onClose} title="Message info">

@@ -85,8 +85,8 @@ export const ChatHeader = memo(({ conversation }: ChatHeaderProps) => {
       avatarUrl = conversation.avatar_url || undefined;
       initials = title.charAt(0).toUpperCase();
       const otherUserId = conversation.members?.find(m => m.user_id !== currentUser?.id)?.user_id;
-      isOnline = (conversation as any).is_online || false;
-      const lastSeen = (conversation as any).last_seen || null;
+      isOnline = (conversation as { is_online?: boolean }).is_online || false;
+      const lastSeen = (conversation as { last_seen?: string }).last_seen || null;
       
       if (otherUserId && presences[otherUserId]) {
         isOnline = presences[otherUserId].is_online;
@@ -140,7 +140,7 @@ export const ChatHeader = memo(({ conversation }: ChatHeaderProps) => {
         m.user_id === currentUser?.id ? { ...m, muted: newMuted } : m
       );
       upsertConversation({ ...conversation, members: updatedMembers });
-    } catch (e) {
+    } catch {
       toast('Failed to update mute settings', 'error');
     }
   };

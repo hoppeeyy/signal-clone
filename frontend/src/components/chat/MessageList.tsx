@@ -7,8 +7,6 @@ import { DaySeparator } from './DaySeparator';
 import { TypingBubble } from './TypingBubble';
 import { Conversation } from '@/lib/types';
 import { useTypingStore } from '@/store/typing';
-import { fetchApi } from '@/lib/api';
-import { useToast } from '@/components/ui/Toast';
 import { SafetyNumberModal } from './SafetyNumberModal';
 
 interface MessageListProps {
@@ -19,7 +17,6 @@ interface MessageListProps {
 export const MessageList = ({ conversation, onReply }: MessageListProps) => {
   const { messages, loading, hasMore, fetchMessages, initialized } = useMessages(conversation.id);
   const currentUser = useAuthStore(s => s.user);
-  const toast = useToast();
   
   const scrollRef = useRef<HTMLDivElement>(null);
   const [showScrollBottom, setShowScrollBottom] = useState(false);
@@ -29,8 +26,9 @@ export const MessageList = ({ conversation, onReply }: MessageListProps) => {
   const [initialUnreadCount, setInitialUnreadCount] = useState(conversation.unread_count);
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setInitialUnreadCount(conversation.unread_count);
-  }, [conversation.id]);
+  }, [conversation.id, conversation.unread_count]);
 
   // To preserve scroll position when loading more
   const previousScrollHeight = useRef<number>(0);

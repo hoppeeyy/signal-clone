@@ -1,6 +1,6 @@
 import { memo, useState } from 'react';
 import { format } from 'date-fns';
-import { Reply, SmilePlus, MoreHorizontal, Copy, AlertCircle, Trash2, FileIcon, Download, DownloadIcon } from 'lucide-react';
+import { Reply, SmilePlus, MoreHorizontal, Copy, AlertCircle, Trash2, FileIcon, Download } from 'lucide-react';
 import { Message } from '@/lib/types';
 import { cn } from '@/components/ui/Button';
 import { Avatar } from '@/components/ui/Avatar';

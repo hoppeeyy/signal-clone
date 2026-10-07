@@ -5,7 +5,7 @@ import { fetchApi } from '@/lib/api';
 import { useToast } from '@/components/ui/Toast';
 import { Modal } from '@/components/ui/Modal';
 import { Avatar } from '@/components/ui/Avatar';
-import { Conversation, ConversationMember } from '@/lib/types';
+import { Conversation } from '@/lib/types';
 import { useAuthStore } from '@/store/auth';
 import { AddMembersModal } from './AddMembersModal';
 
