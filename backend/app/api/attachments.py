@@ -24,10 +24,32 @@ async def upload_attachment(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user)
 ):
+    import filetype
+
     content = await file.read()
     size = len(content)
     
-    mime = file.content_type
+    declared_mime = file.content_type
+    
+    kind_guess = filetype.guess(content)
+    if kind_guess:
+        sniffed_mime = kind_guess.mime
+    else:
+        try:
+            content.decode('utf-8')
+            sniffed_mime = 'text/plain'
+        except UnicodeDecodeError:
+            sniffed_mime = 'application/octet-stream'
+            
+    # For docx/xlsx, filetype detects application/zip. Allow it if declared mime is docx/xlsx.
+    if sniffed_mime == "application/zip" and declared_mime in ALLOWED_FILE_TYPES:
+        mime = declared_mime
+    elif sniffed_mime == declared_mime:
+        mime = sniffed_mime
+    elif sniffed_mime == "text/plain" and declared_mime == "text/plain":
+        mime = sniffed_mime
+    else:
+        raise HTTPException(status_code=400, detail="File content does not match declared MIME type")
     
     if mime in ALLOWED_IMAGE_TYPES:
         if size > MAX_IMAGE_SIZE:

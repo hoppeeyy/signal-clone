@@ -171,7 +171,7 @@ class Attachment(Base):
     id = Column(Integer, primary_key=True, index=True)
     message_id = Column(Integer, ForeignKey("messages.id", ondelete="CASCADE"), nullable=True, index=True)
     uploader_id = Column(Integer, ForeignKey("users.id", ondelete="CASCADE"), nullable=False)
-    storage_key = Column(String, nullable=False, unique=True)
+    storage_key = Column(String, nullable=False)
     original_name = Column(String, nullable=False)
     mime_type = Column(String, nullable=False)
     size_bytes = Column(Integer, nullable=False)

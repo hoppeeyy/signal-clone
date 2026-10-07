@@ -52,12 +52,18 @@ async def upload_avatar(
     current_user: User = Depends(get_current_user), 
     db: Session = Depends(get_db)
 ):
-    if not file.content_type.startswith("image/"):
-        raise HTTPException(status_code=400, detail="Invalid file type")
-    
+    import filetype
+
     contents = await file.read()
     if len(contents) > 2 * 1024 * 1024:
         raise HTTPException(status_code=400, detail="File too large")
+        
+    kind_guess = filetype.guess(contents)
+    if not kind_guess or not kind_guess.mime.startswith("image/"):
+        raise HTTPException(status_code=400, detail="Invalid file type")
+        
+    if kind_guess.mime != file.content_type:
+        raise HTTPException(status_code=400, detail="File content does not match declared MIME type")
     
     from app.core.config import settings
     upload_dir = os.path.join(settings.UPLOAD_DIR, "avatars")
