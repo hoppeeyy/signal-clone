@@ -28,7 +28,7 @@ class LocalDiskStorage(StorageBackend):
         with open(filepath, "wb") as f:
             shutil.copyfileobj(file_obj, f)
             
-        url = f"{settings.PUBLIC_API_URL}/{settings.UPLOAD_DIR}/{key}"
+        url = f"{settings.PUBLIC_API_URL}/uploads/{key}"
         return {"storage_key": key, "url": url}
 
     def delete(self, key: str):

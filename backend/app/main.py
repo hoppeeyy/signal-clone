@@ -43,7 +43,7 @@ async def cleanup_unattached_attachments():
 async def lifespan(app: FastAPI):
     Base.metadata.create_all(bind=engine)
     seed_db()
-    os.makedirs("uploads/avatars", exist_ok=True)
+    os.makedirs(os.path.join(settings.UPLOAD_DIR, "avatars"), exist_ok=True)
     asyncio.create_task(cleanup_unattached_attachments())
     yield
 
@@ -51,14 +51,14 @@ app = FastAPI(title=settings.PROJECT_NAME, lifespan=lifespan)
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=settings.BACKEND_CORS_ORIGINS,
+    allow_origins=settings.cors_origins,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
 
-os.makedirs("uploads", exist_ok=True)
-app.mount("/uploads", StaticFiles(directory="uploads"), name="uploads")
+os.makedirs(settings.UPLOAD_DIR, exist_ok=True)
+app.mount("/uploads", StaticFiles(directory=settings.UPLOAD_DIR), name="uploads")
 
 app.include_router(auth_router)
 app.include_router(users_router)

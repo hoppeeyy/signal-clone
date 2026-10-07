@@ -7,16 +7,22 @@ class Settings(BaseSettings):
     ACCESS_TOKEN_EXPIRE_MINUTES: int = 60 * 24 * 7  # 7 days
     
     # Database
-    DATABASE_URL: str = "sqlite:///./signal.db"
+    DATABASE_URL: str = "sqlite:///./data/app.db"
     
     # CORS
-    BACKEND_CORS_ORIGINS: list[str] = ["http://localhost:3000"]
-
+    BACKEND_CORS_ORIGINS: str = "http://localhost:3000"
+    
     # Storage
     STORAGE_BACKEND: str = "local" # local or cloudinary
-    UPLOAD_DIR: str = "uploads"
+    UPLOAD_DIR: str = "data/uploads"
     BASE_URL: str = "http://localhost:3000"
     PUBLIC_API_URL: str = "http://localhost:8001"
+    
+    ENV: str = "development"
+    
+    @property
+    def cors_origins(self) -> list[str]:
+        return [origin.strip() for origin in self.BACKEND_CORS_ORIGINS.split(",") if origin.strip()]
 
     class Config:
         case_sensitive = True

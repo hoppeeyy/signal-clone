@@ -59,14 +59,15 @@ async def upload_avatar(
     if len(contents) > 2 * 1024 * 1024:
         raise HTTPException(status_code=400, detail="File too large")
     
-    upload_dir = "uploads/avatars"
+    from app.core.config import settings
+    upload_dir = os.path.join(settings.UPLOAD_DIR, "avatars")
     os.makedirs(upload_dir, exist_ok=True)
     
     file_path = f"{upload_dir}/{current_user.id}_{file.filename}"
     with open(file_path, "wb") as f:
         f.write(contents)
     
-    current_user.avatar_url = f"/{file_path}"
+    current_user.avatar_url = f"/uploads/avatars/{current_user.id}_{file.filename}"
     db.commit()
     db.refresh(current_user)
     return current_user
