@@ -3,7 +3,7 @@ from datetime import datetime, timedelta, timezone
 from sqlalchemy.orm import Session
 from app.core.database import SessionLocal, Base, engine
 from app.models.models import (
-    User, Contact, Conversation, ConversationMember, 
+    User, UserSettings, Contact, Conversation, ConversationMember, 
     Message, MessageReceipt, ConversationType, MemberRole, MessageType, ReceiptStatus
 )
 
@@ -39,6 +39,12 @@ def seed_db():
     for data in users_data:
         user = User(**data, is_online=random.choice([True, False]), last_seen=get_random_date())
         db.add(user)
+        db.commit()
+        db.refresh(user)
+        
+        # Create default user settings
+        settings = UserSettings(user_id=user.id)
+        db.add(settings)
         users.append(user)
     db.commit()
 
@@ -89,6 +95,14 @@ def seed_db():
         role = MemberRole.admin if i == 0 else MemberRole.member
         m = ConversationMember(conversation_id=g1.id, user_id=u.id, role=role, joined_at=g1.created_at)
         db.add(m)
+    
+    sys_msg1 = Message(
+        conversation_id=g1.id,
+        body=f"{group1_users[0].display_name} created the group",
+        message_type=MessageType.system,
+        created_at=g1.created_at
+    )
+    db.add(sys_msg1)
     conversations.append((g1, group1_users))
 
     g2 = Conversation(type=ConversationType.group, name="Book Club", created_by=group2_users[0].id, created_at=get_random_date())
@@ -100,6 +114,14 @@ def seed_db():
         role = MemberRole.admin if i == 0 else MemberRole.member
         m = ConversationMember(conversation_id=g2.id, user_id=u.id, role=role, joined_at=g2.created_at)
         db.add(m)
+        
+    sys_msg2 = Message(
+        conversation_id=g2.id,
+        body=f"{group2_users[0].display_name} created the group",
+        message_type=MessageType.system,
+        created_at=g2.created_at
+    )
+    db.add(sys_msg2)
     conversations.append((g2, group2_users))
     
     db.commit()
@@ -114,31 +136,39 @@ def seed_db():
         "Let's meet at 5.", "Perfect.", "On my way."
     ]
 
+    from app.models.models import Reaction
+    emojis = ["👍", "❤️", "😂", "😮", "😢", "🙏"]
     for conv, members in conversations:
         num_msgs = random.randint(10, 30)
         base_time = conv.created_at
         
+        previous_msgs = []
         for i in range(num_msgs):
             sender = random.choice(members)
             base_time = base_time + timedelta(minutes=random.randint(1, 60))
+            
+            reply_to_id = None
+            if previous_msgs and random.random() < 0.3: # 30% chance to reply
+                reply_to_id = random.choice(previous_msgs).id
+                
             msg = Message(
                 conversation_id=conv.id,
                 sender_id=sender.id,
                 body=random.choice(message_bodies),
                 message_type=MessageType.text,
-                created_at=base_time
+                created_at=base_time,
+                reply_to_id=reply_to_id
             )
             db.add(msg)
             db.commit()
             db.refresh(msg)
+            previous_msgs.append(msg)
             
             # Receipts for others
             for other in members:
                 if other.id != sender.id:
-                    # Randomly decide status
                     status = random.choice(list(ReceiptStatus))
-                    # Maybe it's unread completely
-                    if random.random() > 0.1:  # 90% chance it has a receipt
+                    if random.random() > 0.1:
                         receipt = MessageReceipt(
                             message_id=msg.id,
                             user_id=other.id,
@@ -146,6 +176,17 @@ def seed_db():
                             timestamp=base_time + timedelta(seconds=random.randint(5, 60))
                         )
                         db.add(receipt)
+                        
+            # Add reactions
+            if random.random() < 0.4: # 40% chance of getting reactions
+                reacters = random.sample(members, k=random.randint(1, min(3, len(members))))
+                for r_user in reacters:
+                    rx = Reaction(
+                        message_id=msg.id,
+                        user_id=r_user.id,
+                        emoji=random.choice(emojis)
+                    )
+                    db.add(rx)
         
     db.commit()
     db.close()

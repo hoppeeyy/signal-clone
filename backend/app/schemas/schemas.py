@@ -22,6 +22,32 @@ class UserRead(UserBase):
 class UserUpdate(BaseModel):
     display_name: Optional[str] = None
     about: Optional[str] = None
+    avatar_url: Optional[str] = None
+
+class UserSettingsRead(BaseModel):
+    read_receipts: bool
+    typing_indicators: bool
+    last_seen_visibility: str
+    notifications_enabled: bool
+    notification_sound: bool
+    show_message_preview: bool
+    theme: str
+    font_size: str
+    disappearing_default_seconds: Optional[int] = None
+    
+    class Config:
+        from_attributes = True
+
+class UserSettingsUpdate(BaseModel):
+    read_receipts: Optional[bool] = None
+    typing_indicators: Optional[bool] = None
+    last_seen_visibility: Optional[str] = None
+    notifications_enabled: Optional[bool] = None
+    notification_sound: Optional[bool] = None
+    show_message_preview: Optional[bool] = None
+    theme: Optional[str] = None
+    font_size: Optional[str] = None
+    disappearing_default_seconds: Optional[int] = None
 
 # Auth
 class RequestOTP(BaseModel):
@@ -57,6 +83,11 @@ class ConversationMemberRead(BaseModel):
     joined_at: datetime
     user_display_name: str
     user_avatar_url: Optional[str] = None
+    is_online: bool = False
+    last_seen: Optional[datetime] = None
+
+    class Config:
+        from_attributes = True
 
 class ConversationListRead(BaseModel):
     id: int
@@ -68,6 +99,12 @@ class ConversationListRead(BaseModel):
     unread_count: int = 0
     is_online: Optional[bool] = None
     last_seen: Optional[datetime] = None
+    muted: bool = False
+    muted_until: Optional[datetime] = None
+    members: List[ConversationMemberRead] = []
+
+    class Config:
+        from_attributes = True
 
 class ConversationDetailRead(BaseModel):
     id: int
@@ -80,21 +117,40 @@ class ConversationDetailRead(BaseModel):
     disappearing_timer_seconds: Optional[int] = None
     members: List[ConversationMemberRead] = []
 
+    class Config:
+        from_attributes = True
+
 class GroupCreate(BaseModel):
     name: str
     member_ids: List[int]
+    avatar_url: Optional[str] = None
 
 class DirectCreate(BaseModel):
     user_id: int
 
 class GroupUpdate(BaseModel):
     name: Optional[str] = None
+    avatar_url: Optional[str] = None
 
 class MemberAdd(BaseModel):
-    user_id: int
+    user_ids: List[int]
 
 class MemberRoleUpdate(BaseModel):
     role: MemberRole
+
+class MuteUpdate(BaseModel):
+    muted: bool
+    muted_until: Optional[datetime] = None
+
+class MessageReceiptRead(BaseModel):
+    user_id: int
+    user_display_name: str
+    user_avatar_url: Optional[str] = None
+    status: str
+    timestamp: datetime
+
+    class Config:
+        from_attributes = True
 
 # Message
 class MessageCreate(BaseModel):
@@ -115,5 +171,8 @@ class MessageRead(BaseModel):
     
     sender_summary: Optional[Dict[str, Any]] = None
     reply_to_preview: Optional[Dict[str, Any]] = None
-    reactions_grouped: Dict[str, List[int]] = {}
+    reactions_grouped: List[Dict[str, Any]] = []
     status: str
+
+    class Config:
+        from_attributes = True

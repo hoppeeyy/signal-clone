@@ -32,6 +32,12 @@ def verify_otp(data: VerifyOTP, db: Session = Depends(get_db)):
         db.add(user)
         db.commit()
         db.refresh(user)
+        
+        from app.models.models import UserSettings
+        settings = UserSettings(user_id=user.id)
+        db.add(settings)
+        db.commit()
+        
         is_new = True
         
     access_token = create_access_token(subject=str(user.id))

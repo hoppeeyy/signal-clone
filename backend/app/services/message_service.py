@@ -1,5 +1,5 @@
 from sqlalchemy.orm import Session, selectinload
-from app.models.models import Conversation, Message, MessageReceipt, Reaction, ReceiptStatus, ConversationType, User, ConversationMember
+from app.models.models import Conversation, Message, MessageReceipt, Reaction, ReceiptStatus, ConversationType, User, ConversationMember, Contact
 from typing import Optional, List
 from datetime import datetime, timezone
 
@@ -7,66 +7,92 @@ def compute_message_status(msg: Message, user_id: int, conv: Conversation) -> st
     status = "sent"
     if msg.sender_id != user_id:
         return ""
+        
+    can_see_read = True
+    if msg.sender and msg.sender.settings and not msg.sender.settings.read_receipts:
+        can_see_read = False
     
     if conv and conv.type == ConversationType.direct:
         r = next((r for r in msg.receipts if r.user_id != user_id), None)
         if r:
             status = r.status.value
+            if status == "read" and not can_see_read:
+                status = "delivered"
     elif conv:
         member_count = len(conv.members)
         if len(msg.receipts) > 0 and len(msg.receipts) >= member_count - 1:
             if all(r.status == ReceiptStatus.read for r in msg.receipts):
-                status = "read"
+                status = "read" if can_see_read else "delivered"
             else:
                 status = "delivered"
     return status
 
-def format_message(msg: Message, user_id: int, conv: Conversation) -> dict:
+def format_message(msg: Message, user_id: int, conv: Conversation, contact_map: dict = None) -> dict:
+    if contact_map is None:
+        contact_map = {}
+        
     status = compute_message_status(msg, user_id, conv)
         
-    reactions_grouped = {}
+    reactions_grouped_dict = {}
     for rx in msg.reactions:
-        if rx.emoji not in reactions_grouped:
-            reactions_grouped[rx.emoji] = []
-        reactions_grouped[rx.emoji].append(rx.user_id)
+        if rx.emoji not in reactions_grouped_dict:
+            reactions_grouped_dict[rx.emoji] = []
+        reactions_grouped_dict[rx.emoji].append(rx.user_id)
+        
+    reactions_grouped = [{"emoji": e, "count": len(uids), "user_ids": uids} for e, uids in reactions_grouped_dict.items()]
         
     sender_summary = None
     if msg.sender:
         sender_summary = {
             "id": msg.sender.id,
-            "display_name": msg.sender.display_name,
+            "display_name": contact_map.get(msg.sender.id, msg.sender.display_name),
             "avatar_url": msg.sender.avatar_url
         }
         
     reply_preview = None
     if msg.reply_to:
+        reply_is_deleted = msg.reply_to.deleted_at is not None
         reply_preview = {
             "id": msg.reply_to.id,
-            "body": msg.reply_to.body,
-            "sender_display_name": msg.reply_to.sender.display_name if msg.reply_to.sender else None
+            "sender_id": msg.reply_to.sender_id,
+            "sender_name": contact_map.get(msg.reply_to.sender.id, msg.reply_to.sender.display_name) if msg.reply_to.sender else None,
+            "text_preview": (msg.reply_to.body[:100] + '...') if msg.reply_to.body and len(msg.reply_to.body) > 100 else msg.reply_to.body if not reply_is_deleted else None,
+            "type": msg.reply_to.message_type.value,
+            "deleted": reply_is_deleted
         }
+        
+    is_deleted = msg.deleted_at is not None
         
     return {
         "id": msg.id,
         "conversation_id": msg.conversation_id,
         "sender_id": msg.sender_id,
-        "body": msg.body,
+        "body": msg.body if not is_deleted else None,
         "reply_to_id": msg.reply_to_id,
-        "message_type": msg.message_type.value if hasattr(msg.message_type, 'value') else msg.message_type,
-        "created_at": msg.created_at.isoformat() if msg.created_at else None,
+        "message_type": msg.message_type.value,
+        "created_at": msg.created_at.isoformat(),
         "sender_summary": sender_summary,
         "reply_to_preview": reply_preview,
         "reactions_grouped": reactions_grouped,
-        "status": status
+        "status": status,
+        "deleted": is_deleted
     }
 
+
 def get_messages(db: Session, conversation_id: int, user_id: int, limit: int = 30, before_id: Optional[int] = None):
+    from app.models.models import MessageHidden
+    
+    hidden_subq = db.query(MessageHidden.message_id).filter(MessageHidden.user_id == user_id).subquery()
+    
     query = db.query(Message).options(
         selectinload(Message.sender),
         selectinload(Message.reply_to).selectinload(Message.sender),
         selectinload(Message.receipts),
         selectinload(Message.reactions)
-    ).filter(Message.conversation_id == conversation_id)
+    ).filter(
+        Message.conversation_id == conversation_id,
+        Message.id.not_in(hidden_subq)
+    )
     
     if before_id:
         query = query.filter(Message.id < before_id)
@@ -76,9 +102,12 @@ def get_messages(db: Session, conversation_id: int, user_id: int, limit: int = 3
     
     conv = db.query(Conversation).get(conversation_id)
     
+    contacts = db.query(Contact).filter(Contact.owner_id == user_id).all()
+    contact_map = {c.contact_user_id: c.nickname for c in contacts if c.nickname}
+    
     results = []
     for msg in messages:
-        results.append(format_message(msg, user_id, conv))
+        results.append(format_message(msg, user_id, conv, contact_map))
     return results
 
 async def send_message_ws_logic(db: Session, conv_id: int, sender_id: int, body: str, reply_to_id: Optional[int] = None):
@@ -87,6 +116,11 @@ async def send_message_ws_logic(db: Session, conv_id: int, sender_id: int, body:
     conv = db.query(Conversation).get(conv_id)
     if not conv or not any(m.user_id == sender_id for m in conv.members):
         return None
+        
+    if reply_to_id:
+        replied_msg = db.query(Message).get(reply_to_id)
+        if not replied_msg or replied_msg.conversation_id != conv_id or replied_msg.deleted_at is not None:
+            return {"error": "Invalid reply_to_id"}
         
     msg = Message(
         conversation_id=conv_id,
@@ -120,14 +154,18 @@ async def send_message_ws_logic(db: Session, conv_id: int, sender_id: int, body:
 
     # Broadcast to others
     for uid in member_ids:
-        other_msg_dict = format_message(msg, uid, conv)
+        contacts = db.query(Contact).filter(Contact.owner_id == uid).all()
+        contact_map = {c.contact_user_id: c.nickname for c in contacts if c.nickname}
+        other_msg_dict = format_message(msg, uid, conv, contact_map)
         await manager.send_to_user(uid, {
             "type": "new_message",
             "message": other_msg_dict
         })
         
     # Re-evaluate status for sender
-    final_sender_dict = format_message(msg, sender_id, conv)
+    contacts = db.query(Contact).filter(Contact.owner_id == sender_id).all()
+    contact_map = {c.contact_user_id: c.nickname for c in contacts if c.nickname}
+    final_sender_dict = format_message(msg, sender_id, conv, contact_map)
     
     # Also send to other tabs of the sender
     await manager.send_to_user(sender_id, {
@@ -189,7 +227,14 @@ async def mark_read_logic(db: Session, conv_id: int, user_id: int):
     if not last_msg:
         return
         
+    user = db.query(User).get(user_id)
+    allow_receipts = not (user and user.settings and not user.settings.read_receipts)
+    
     member.last_read_message_id = last_msg.id
+    db.commit()
+    
+    if not allow_receipts:
+        return
     
     unread_msgs = db.query(Message).filter(
         Message.conversation_id == conv_id,
@@ -220,3 +265,67 @@ async def mark_read_logic(db: Session, conv_id: int, user_id: int):
                 "status": new_status,
                 "user_id": user_id
             })
+
+async def add_reaction_logic(db: Session, message_id: int, user_id: int, emoji: str):
+    from app.ws.manager import manager
+    msg = db.query(Message).get(message_id)
+    if not msg:
+        return
+        
+    conv = db.query(Conversation).get(msg.conversation_id)
+    if not any(m.user_id == user_id for m in conv.members):
+        return
+        
+    rx = db.query(Reaction).filter_by(message_id=message_id, user_id=user_id).first()
+    if rx:
+        rx.emoji = emoji
+    else:
+        db.add(Reaction(message_id=message_id, user_id=user_id, emoji=emoji))
+        
+    db.commit()
+    
+    rx_grouped_dict = {}
+    for r in msg.reactions:
+        if r.emoji not in rx_grouped_dict:
+            rx_grouped_dict[r.emoji] = []
+        rx_grouped_dict[r.emoji].append(r.user_id)
+        
+    reactions_summary = [{"emoji": e, "count": len(uids), "user_ids": uids} for e, uids in rx_grouped_dict.items()]
+    
+    member_ids = [m.user_id for m in conv.members]
+    await manager.send_to_users(member_ids, {
+        "type": "reaction.updated",
+        "message_id": message_id,
+        "conversation_id": conv.id,
+        "user_id": user_id,
+        "emoji": emoji,
+        "reactions_summary": reactions_summary
+    })
+
+async def remove_reaction_logic(db: Session, message_id: int, user_id: int):
+    from app.ws.manager import manager
+    rx = db.query(Reaction).filter_by(message_id=message_id, user_id=user_id).first()
+    if rx:
+        msg = db.query(Message).get(message_id)
+        conv = db.query(Conversation).get(msg.conversation_id)
+        db.delete(rx)
+        db.commit()
+        
+        rx_grouped_dict = {}
+        for r in msg.reactions:
+            if r.emoji not in rx_grouped_dict:
+                rx_grouped_dict[r.emoji] = []
+            rx_grouped_dict[r.emoji].append(r.user_id)
+            
+        reactions_summary = [{"emoji": e, "count": len(uids), "user_ids": uids} for e, uids in rx_grouped_dict.items()]
+            
+        member_ids = [m.user_id for m in conv.members]
+        await manager.send_to_users(member_ids, {
+            "type": "reaction.updated",
+            "message_id": message_id,
+            "conversation_id": conv.id,
+            "user_id": user_id,
+            "emoji": None,
+            "reactions_summary": reactions_summary
+        })
+

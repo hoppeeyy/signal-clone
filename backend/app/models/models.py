@@ -36,6 +36,23 @@ class User(Base):
 
     contacts = relationship("Contact", foreign_keys="Contact.owner_id", back_populates="owner", cascade="all, delete-orphan")
     conversations = relationship("ConversationMember", back_populates="user", cascade="all, delete-orphan")
+    settings = relationship("UserSettings", back_populates="user", uselist=False, cascade="all, delete-orphan")
+
+class UserSettings(Base):
+    __tablename__ = "user_settings"
+
+    user_id = Column(Integer, ForeignKey("users.id", ondelete="CASCADE"), primary_key=True)
+    read_receipts = Column(Boolean, default=True)
+    typing_indicators = Column(Boolean, default=True)
+    last_seen_visibility = Column(String, default='everyone') # 'everyone' | 'nobody'
+    notifications_enabled = Column(Boolean, default=True)
+    notification_sound = Column(Boolean, default=True)
+    show_message_preview = Column(Boolean, default=True)
+    theme = Column(String, default='system')
+    font_size = Column(String, default='medium')
+    disappearing_default_seconds = Column(Integer, nullable=True)
+
+    user = relationship("User", back_populates="settings")
 
 class Contact(Base):
     __tablename__ = "contacts"
@@ -75,6 +92,8 @@ class ConversationMember(Base):
     role = Column(Enum(MemberRole), default=MemberRole.member, nullable=False)
     joined_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))
     last_read_message_id = Column(Integer, ForeignKey("messages.id", ondelete="SET NULL"), nullable=True)
+    muted = Column(Boolean, default=False)
+    muted_until = Column(DateTime, nullable=True)
 
     __table_args__ = (UniqueConstraint("conversation_id", "user_id", name="uq_conv_user"),)
 
@@ -127,4 +146,16 @@ class Reaction(Base):
     __table_args__ = (UniqueConstraint("message_id", "user_id", name="uq_msg_user_reaction"),)
 
     message = relationship("Message", back_populates="reactions")
+    user = relationship("User")
+
+class MessageHidden(Base):
+    __tablename__ = "message_hidden"
+
+    id = Column(Integer, primary_key=True, index=True)
+    message_id = Column(Integer, ForeignKey("messages.id", ondelete="CASCADE"), nullable=False)
+    user_id = Column(Integer, ForeignKey("users.id", ondelete="CASCADE"), nullable=False)
+
+    __table_args__ = (UniqueConstraint("message_id", "user_id", name="uq_msg_user_hidden"),)
+
+    message = relationship("Message")
     user = relationship("User")

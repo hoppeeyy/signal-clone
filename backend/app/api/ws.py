@@ -42,14 +42,17 @@ async def websocket_endpoint(websocket: WebSocket, token: str):
     if is_first:
         user.is_online = True
         db.commit()
-        shared_users = get_shared_users(db, user.id)
-        presence_event = {
-            "type": "presence",
-            "user_id": user.id,
-            "is_online": True,
-            "last_seen": None
-        }
-        await manager.send_to_users(shared_users, presence_event, exclude=websocket)
+        
+        is_visible = not (user.settings and user.settings.last_seen_visibility == 'nobody')
+        if is_visible:
+            shared_users = get_shared_users(db, user.id)
+            presence_event = {
+                "type": "presence",
+                "user_id": user.id,
+                "is_online": True,
+                "last_seen": None
+            }
+            await manager.send_to_users(shared_users, presence_event, exclude=websocket)
         
         await process_undelivered_receipts(db, user.id)
 
@@ -67,6 +70,8 @@ async def websocket_endpoint(websocket: WebSocket, token: str):
                 await websocket.send_text(json.dumps({"type": "pong"}))
                 
             elif msg_type == "typing_start":
+                if user.settings and not user.settings.typing_indicators:
+                    continue
                 conv_id = payload.get("conversation_id")
                 if conv_id:
                     conv = db.query(Conversation).get(conv_id)
@@ -94,6 +99,8 @@ async def websocket_endpoint(websocket: WebSocket, token: str):
                         manager.typing_tasks[task_key] = asyncio.create_task(expire_typing())
                         
             elif msg_type == "typing_stop":
+                if user.settings and not user.settings.typing_indicators:
+                    continue
                 conv_id = payload.get("conversation_id")
                 if conv_id:
                     conv = db.query(Conversation).get(conv_id)
@@ -119,13 +126,31 @@ async def websocket_endpoint(websocket: WebSocket, token: str):
                 if conv_id and body:
                     msg_dict = await send_message_ws_logic(db, conv_id, user.id, body, reply_to_id)
                     if msg_dict:
-                        # Exclude self from new_message? send_message_ws_logic already sent to others + self, 
-                        # but we still need message_ack. So we return message_ack to THIS socket only.
-                        await websocket.send_text(json.dumps({
-                            "type": "message_ack",
-                            "client_temp_id": client_temp_id,
-                            "message": msg_dict
-                        }))
+                        if "error" in msg_dict:
+                            await websocket.send_text(json.dumps({
+                                "type": "error",
+                                "client_temp_id": client_temp_id,
+                                "error": msg_dict["error"]
+                            }))
+                        else:
+                            await websocket.send_text(json.dumps({
+                                "type": "message_ack",
+                                "client_temp_id": client_temp_id,
+                                "message": msg_dict
+                            }))
+                            
+            elif msg_type == "reaction.set":
+                message_id = payload.get("message_id")
+                emoji = payload.get("emoji")
+                if message_id and emoji:
+                    from app.services.message_service import add_reaction_logic
+                    await add_reaction_logic(db, message_id, user.id, emoji)
+                    
+            elif msg_type == "reaction.remove":
+                message_id = payload.get("message_id")
+                if message_id:
+                    from app.services.message_service import remove_reaction_logic
+                    await remove_reaction_logic(db, message_id, user.id)
                         
             elif msg_type == "mark_read":
                 conv_id = payload.get("conversation_id")
@@ -140,14 +165,16 @@ async def websocket_endpoint(websocket: WebSocket, token: str):
             user.last_seen = now
             db.commit()
             
-            shared_users = get_shared_users(db, user.id)
-            presence_event = {
-                "type": "presence",
-                "user_id": user.id,
-                "is_online": False,
-                "last_seen": now.isoformat()
-            }
-            await manager.send_to_users(shared_users, presence_event)
+            is_visible = not (user.settings and user.settings.last_seen_visibility == 'nobody')
+            if is_visible:
+                shared_users = get_shared_users(db, user.id)
+                presence_event = {
+                    "type": "presence",
+                    "user_id": user.id,
+                    "is_online": False,
+                    "last_seen": now.isoformat()
+                }
+                await manager.send_to_users(shared_users, presence_event)
             
     finally:
         db.close()
