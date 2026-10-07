@@ -185,7 +185,7 @@ export function useRealtime() {
       try {
         const conv = await fetchApi<Conversation>(`/conversations/${event.conversation_id}`);
         upsertConversation(conv);
-      } catch (e) {
+      } catch {
         // Ignore
       }
     });

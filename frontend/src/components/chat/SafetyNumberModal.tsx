@@ -17,6 +17,7 @@ export const SafetyNumberModal = ({ isOpen, onClose, conversationId }: SafetyNum
 
   useEffect(() => {
     if (isOpen && conversationId) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setLoading(true);
       fetchApi<{safety_number: string}>(`/conversations/${conversationId}/safety-number`)
         .then(res => setSafetyNumber(res.safety_number))

@@ -26,12 +26,10 @@ export const MessageList = ({ conversation, onReply }: MessageListProps) => {
   const [unreadCount, setUnreadCount] = useState(0); // If scrolled up and new msgs arrive
   const [safetyModalOpen, setSafetyModalOpen] = useState(false);
   
-  const initialUnreadCount = useRef(conversation.unread_count);
-  const unreadDividerInserted = useRef(false);
+  const [initialUnreadCount, setInitialUnreadCount] = useState(conversation.unread_count);
 
   useEffect(() => {
-    initialUnreadCount.current = conversation.unread_count;
-    unreadDividerInserted.current = false;
+    setInitialUnreadCount(conversation.unread_count);
   }, [conversation.id]);
 
   // To preserve scroll position when loading more
@@ -140,6 +138,7 @@ export const MessageList = ({ conversation, onReply }: MessageListProps) => {
   }
 
   let lastDateStr = '';
+  let unreadDividerInserted = false;
 
   for (let i = 0; i < messages.length; i++) {
     const msg = messages[i];
@@ -150,8 +149,8 @@ export const MessageList = ({ conversation, onReply }: MessageListProps) => {
       lastDateStr = dateStr;
     }
 
-    if (initialUnreadCount.current > 0 && !unreadDividerInserted.current && i === messages.length - initialUnreadCount.current) {
-      unreadDividerInserted.current = true;
+    if (initialUnreadCount > 0 && !unreadDividerInserted && i === messages.length - initialUnreadCount) {
+      unreadDividerInserted = true;
       groupedElements.push(
         <div key="unread-divider" className="flex items-center justify-center my-4 relative">
           <div className="absolute inset-0 flex items-center px-4">

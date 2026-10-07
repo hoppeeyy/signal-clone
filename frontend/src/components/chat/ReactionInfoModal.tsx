@@ -31,7 +31,7 @@ export const ReactionInfoModal = ({ isOpen, onClose, message }: ReactionInfoModa
           setLoading(true);
           const data = await fetchApi<ReactionWithUser[]>(`/messages/${message.id}/reactions`);
           setReactions(data);
-        } catch (err) {
+        } catch {
           toast('Failed to load reactions', 'error');
         } finally {
           setLoading(false);

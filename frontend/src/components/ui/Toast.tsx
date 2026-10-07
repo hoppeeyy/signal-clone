@@ -48,7 +48,7 @@ export const ToastProvider = ({ children }: { children: ReactNode }) => {
         {toasts.map((t) => (
           <div
             key={t.id}
-            onClick={(e) => {
+            onClick={() => {
               if (t.onClick) {
                 t.onClick();
                 removeToast(t.id);
