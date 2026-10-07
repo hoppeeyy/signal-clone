@@ -127,7 +127,15 @@ export const MessageBubble = memo(({ message, isOwn, isGroup, isFirstInGroup, is
     }
   };
 
-  const timeStr = format(new Date(message.created_at), 'h:mm a');
+  const dateToParse = message.created_at.endsWith('Z') ? message.created_at : message.created_at + 'Z';
+  const timeStr = format(new Date(dateToParse), 'h:mm a');
+
+  const resolveUrl = (url: string) => {
+    if (url.startsWith('/')) {
+      return `${(process.env.NEXT_PUBLIC_API_URL as string).replace(/\/api$/, '')}${url}`;
+    }
+    return url;
+  };
 
   return (
     <div 
@@ -211,10 +219,10 @@ export const MessageBubble = memo(({ message, isOwn, isGroup, isFirstInGroup, is
                   {message.attachments.filter(a => a.kind === 'image').map(img => (
                     <div key={img.id} className="relative group/img cursor-pointer max-h-64 overflow-hidden bg-black/10">
                       <img 
-                        src={img.url} 
+                        src={resolveUrl(img.url)} 
                         alt={img.original_name} 
                         className="w-full h-full object-cover transition-transform hover:scale-105"
-                        onClick={() => window.open(img.url, '_blank')}
+                        onClick={() => window.open(resolveUrl(img.url), '_blank')}
                         onError={(e) => { e.currentTarget.parentElement!.style.display = 'none'; }}
                       />
                     </div>
@@ -230,7 +238,7 @@ export const MessageBubble = memo(({ message, isOwn, isGroup, isFirstInGroup, is
                     "flex items-center gap-3 p-3 rounded-lg border max-w-sm cursor-pointer hover:opacity-90 transition-opacity",
                     isOwn ? "bg-white/10 border-white/20" : "bg-theme-input border-theme-divider"
                   )}
-                  onClick={() => window.open(file.url, '_blank')}
+                  onClick={() => window.open(resolveUrl(file.url), '_blank')}
                 >
                   <div className={cn(
                     "w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0",
@@ -257,7 +265,7 @@ export const MessageBubble = memo(({ message, isOwn, isGroup, isFirstInGroup, is
                     onClick={(e) => {
                       e.stopPropagation();
                       const a = document.createElement('a');
-                      a.href = file.url;
+                      a.href = resolveUrl(file.url);
                       a.download = file.original_name;
                       a.click();
                     }}

@@ -14,7 +14,8 @@ import { useRouter } from 'next/navigation';
 
 const formatLastSeen = (dateStr: string | null) => {
   if (!dateStr) return 'last seen recently';
-  const date = new Date(dateStr);
+  const dateToParse = dateStr.endsWith('Z') ? dateStr : dateStr + 'Z';
+  const date = new Date(dateToParse);
   if (isToday(date)) return `last seen today at ${format(date, 'h:mm a')}`;
   if (isYesterday(date)) return `last seen yesterday at ${format(date, 'h:mm a')}`;
   if (differenceInDays(new Date(), date) < 7) return `last seen ${format(date, 'EEE')} at ${format(date, 'h:mm a')}`;

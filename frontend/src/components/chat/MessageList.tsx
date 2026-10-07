@@ -141,9 +141,10 @@ export const MessageList = ({ conversation, onReply }: MessageListProps) => {
   for (let i = 0; i < messages.length; i++) {
     const msg = messages[i];
     
-    const dateStr = new Date(msg.created_at).toDateString();
+    const msgDateStr = msg.created_at.endsWith('Z') ? msg.created_at : msg.created_at + 'Z';
+    const dateStr = new Date(msgDateStr).toDateString();
     if (dateStr !== lastDateStr) {
-      groupedElements.push(<DaySeparator key={`day-${dateStr}`} date={new Date(msg.created_at)} />);
+      groupedElements.push(<DaySeparator key={`day-${dateStr}`} date={new Date(msgDateStr)} />);
       lastDateStr = dateStr;
     }
 

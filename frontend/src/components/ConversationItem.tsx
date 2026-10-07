@@ -9,7 +9,8 @@ import { usePresenceStore } from '@/store/presence';
 import { cn } from '@/components/ui/Button';
 
 const formatTime = (dateStr: string) => {
-  const date = new Date(dateStr);
+  const dateToParse = dateStr.endsWith('Z') ? dateStr : dateStr + 'Z';
+  const date = new Date(dateToParse);
   if (isToday(date)) return format(date, 'h:mm a');
   if (isYesterday(date)) return 'Yesterday';
   if (differenceInDays(new Date(), date) < 7) return format(date, 'EEEE');

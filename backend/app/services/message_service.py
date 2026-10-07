@@ -79,7 +79,7 @@ def format_message(msg: Message, user_id: int, conv: Conversation, contact_map: 
     
     attachments_list = []
     for att in msg.attachments:
-        url = f"{settings.PUBLIC_API_URL}/{settings.UPLOAD_DIR}/{att.storage_key}"
+        url = f"/uploads/{att.storage_key}"
         attachments_list.append({
             "id": att.id,
             "message_id": att.message_id,

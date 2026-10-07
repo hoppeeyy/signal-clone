@@ -47,7 +47,7 @@ export const MessageInfoModal = ({ isOpen, onClose, message }: MessageInfoModalP
         <div className="bg-theme-bubble-out text-white p-3 rounded-[12px] rounded-tr-sm self-end max-w-[80%]">
           <p className="whitespace-pre-wrap break-words">{message.body}</p>
           <div className="text-[10px] text-white/80 text-right mt-1">
-            {format(new Date(message.created_at), 'MMM d, h:mm a')}
+            {format(new Date(message.created_at.endsWith('Z') ? message.created_at : message.created_at + 'Z'), 'MMM d, h:mm a')}
           </div>
         </div>
 
@@ -71,7 +71,7 @@ export const MessageInfoModal = ({ isOpen, onClose, message }: MessageInfoModalP
                     <Avatar src={r.user_avatar_url} initials={r.user_display_name.charAt(0).toUpperCase()} size="sm" />
                     <div className="flex flex-col flex-1">
                       <span className="text-sm font-semibold text-theme-text">{r.user_display_name}</span>
-                      <span className="text-xs text-theme-text-secondary">{format(new Date(r.timestamp), 'MMM d, h:mm a')}</span>
+                      <span className="text-xs text-theme-text-secondary">{format(new Date(r.timestamp.endsWith('Z') ? r.timestamp : r.timestamp + 'Z'), 'MMM d, h:mm a')}</span>
                     </div>
                   </div>
                 ))}
@@ -88,7 +88,7 @@ export const MessageInfoModal = ({ isOpen, onClose, message }: MessageInfoModalP
                     <Avatar src={r.user_avatar_url} initials={r.user_display_name.charAt(0).toUpperCase()} size="sm" />
                     <div className="flex flex-col flex-1">
                       <span className="text-sm font-semibold text-theme-text">{r.user_display_name}</span>
-                      <span className="text-xs text-theme-text-secondary">{format(new Date(r.timestamp), 'MMM d, h:mm a')}</span>
+                      <span className="text-xs text-theme-text-secondary">{format(new Date(r.timestamp.endsWith('Z') ? r.timestamp : r.timestamp + 'Z'), 'MMM d, h:mm a')}</span>
                     </div>
                   </div>
                 ))}
