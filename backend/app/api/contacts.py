@@ -13,9 +13,17 @@ def get_contacts(current_user: User = Depends(get_current_user), db: Session = D
 
 @router.post("", response_model=ContactRead)
 def add_contact(data: ContactCreate, current_user: User = Depends(get_current_user), db: Session = Depends(get_db)):
-    contact_user = db.query(User).filter(
-        (User.phone_number == data.identifier) | (User.username == data.identifier)
-    ).first()
+    contact_user = None
+    
+    # Try by numeric user_id first (sent from chat header)
+    if data.identifier.isdigit():
+        contact_user = db.query(User).filter(User.id == int(data.identifier)).first()
+    
+    # Fall back to phone/username
+    if not contact_user:
+        contact_user = db.query(User).filter(
+            (User.phone_number == data.identifier) | (User.username == data.identifier)
+        ).first()
     
     if not contact_user:
         raise HTTPException(status_code=404, detail="User not found")

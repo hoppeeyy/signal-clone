@@ -1,11 +1,11 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { Modal } from '@/components/ui/Modal';
 import { useAuthStore } from '@/store/auth';
 import { fetchApi } from '@/lib/api';
 import { useToast } from '@/components/ui/Toast';
 import { Avatar } from '@/components/ui/Avatar';
 import { User, UserSettings } from '@/lib/types';
-import { Camera, User as UserIcon, Shield, Bell, MessageCircle, Moon, Monitor, Smartphone, BookOpen } from 'lucide-react';
+import { Camera, User as UserIcon, Shield, Bell, MessageCircle, Moon, Monitor, BookOpen, X } from 'lucide-react';
 import { cn } from '@/components/ui/Button';
 
 interface SettingsModalProps {
@@ -27,6 +27,8 @@ export const SettingsModal = ({ isOpen, onClose }: SettingsModalProps) => {
   const [displayName, setDisplayName] = useState(user?.display_name || '');
   const [about, setAbout] = useState(user?.about || '');
   const [avatarUrl, setAvatarUrl] = useState(user?.avatar_url || '');
+  const [avatarUploading, setAvatarUploading] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     if (isOpen) {
@@ -66,10 +68,35 @@ export const SettingsModal = ({ isOpen, onClose }: SettingsModalProps) => {
       });
       updateUser(updated);
       toast('Profile updated', 'success');
-    } catch (e) {
+    } catch {
       toast('Failed to update profile', 'error');
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleAvatarFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setAvatarUploading(true);
+    try {
+      const form = new FormData();
+      form.append('file', file);
+      const token = typeof window !== 'undefined' ? localStorage.getItem('token') : null;
+      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8001'}/api/attachments/upload`, {
+        method: 'POST',
+        headers: token ? { Authorization: `Bearer ${token}` } : {},
+        body: form,
+      });
+      if (!res.ok) throw new Error('Upload failed');
+      const data = await res.json();
+      setAvatarUrl(data.url);
+      toast('Photo ready — click Save to apply', 'info');
+    } catch {
+      toast('Failed to upload photo', 'error');
+    } finally {
+      setAvatarUploading(false);
+      if (fileInputRef.current) fileInputRef.current.value = '';
     }
   };
 
@@ -150,24 +177,50 @@ export const SettingsModal = ({ isOpen, onClose }: SettingsModalProps) => {
             
             {activeTab === 'profile' && (
               <div className="max-w-md flex flex-col gap-6">
-                <div className="flex flex-col items-center justify-center">
-                  <div className="relative group cursor-pointer">
+                <div className="flex flex-col items-center justify-center gap-3">
+                  <div
+                    className="relative group cursor-pointer"
+                    onClick={() => fileInputRef.current?.click()}
+                    title="Click to change photo"
+                  >
                     <Avatar 
                       src={avatarUrl} 
                       initials={user?.display_name?.charAt(0).toUpperCase() || '?'} 
                       size="lg" 
                     />
-                    <div className="absolute inset-0 bg-black/40 rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
-                      <Camera className="text-white w-6 h-6" />
+                    <div className="absolute inset-0 bg-black/50 rounded-full flex flex-col items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity gap-0.5">
+                      {avatarUploading
+                        ? <div className="w-5 h-5 rounded-full border-2 border-white border-t-transparent animate-spin" />
+                        : <Camera className="text-white w-5 h-5" />
+                      }
+                      <span className="text-white text-[9px] font-semibold tracking-wider">{avatarUploading ? 'UPLOADING…' : 'CHANGE'}</span>
                     </div>
                   </div>
-                  <input 
-                    type="text" 
-                    placeholder="Avatar URL" 
-                    value={avatarUrl}
-                    onChange={e => setAvatarUrl(e.target.value)}
-                    className="mt-4 w-full bg-theme-input text-theme-text px-3 py-2 rounded-[8px] border-none outline-none text-sm"
+                  <input
+                    ref={fileInputRef}
+                    type="file"
+                    accept="image/*"
+                    className="hidden"
+                    onChange={handleAvatarFileChange}
                   />
+                  <div className="flex items-center gap-2 w-full">
+                    <input 
+                      type="text" 
+                      placeholder="Or paste an image URL…" 
+                      value={avatarUrl}
+                      onChange={e => setAvatarUrl(e.target.value)}
+                      className="flex-1 bg-theme-input text-theme-text px-3 py-2 rounded-[8px] border-none outline-none text-sm"
+                    />
+                    {avatarUrl && (
+                      <button
+                        onClick={() => setAvatarUrl('')}
+                        className="text-theme-text-secondary hover:text-red-500 transition-colors"
+                        title="Remove photo"
+                      >
+                        <X className="w-4 h-4" />
+                      </button>
+                    )}
+                  </div>
                 </div>
                 
                 <div className="flex flex-col gap-4">

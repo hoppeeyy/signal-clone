@@ -1,5 +1,5 @@
 import { memo, useState, useRef, useEffect } from 'react';
-import { Phone, Video, Search, MoreVertical, Info, BellOff, Bell, Archive, Trash2, Clock, MailOpen, Lock, ArrowLeft } from 'lucide-react';
+import { Phone, Video, Search, MoreVertical, Info, BellOff, Bell, Archive, Trash2, Clock, MailOpen, Lock, ArrowLeft, UserPlus, UserCheck } from 'lucide-react';
 import { format, isToday, isYesterday, differenceInDays } from 'date-fns';
 import { Conversation } from '@/lib/types';
 import { Avatar } from '@/components/ui/Avatar';
@@ -43,8 +43,22 @@ export const ChatHeader = memo(({ conversation }: ChatHeaderProps) => {
 
   const [groupInfoOpen, setGroupInfoOpen] = useState(false);
   const [dropdownOpen, setDropdownOpen] = useState(false);
+  const [isSavedContact, setIsSavedContact] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
   const upsertConversation = useChatsStore(s => s.upsertConversation);
+
+  // Check if other user is already a contact
+  useEffect(() => {
+    if (conversation.type === 'direct') {
+      const otherUser = conversation.members?.find(m => m.user_id !== currentUser?.id);
+      if (otherUser) {
+        fetchApi<{ id: number }[]>('/contacts').then(contacts => {
+          setIsSavedContact(contacts.some(c => c.id === otherUser.user_id || (c as unknown as { contact_user_id: number }).contact_user_id === otherUser.user_id));
+        }).catch(() => {});
+      }
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [conversation.id]);
 
   useEffect(() => {
     const handleClickOutside = (e: MouseEvent) => {
@@ -145,6 +159,29 @@ export const ChatHeader = memo(({ conversation }: ChatHeaderProps) => {
     }
   };
 
+  const handleSaveContact = async () => {
+    setDropdownOpen(false);
+    const otherUser = conversation.members?.find(m => m.user_id !== currentUser?.id);
+    if (!otherUser) return;
+    try {
+      // Try phone/username — use user_id via a dedicated endpoint if available
+      await fetchApi('/contacts', {
+        method: 'POST',
+        body: JSON.stringify({ identifier: String(otherUser.user_id), nickname: otherUser.user_display_name })
+      });
+      setIsSavedContact(true);
+      toast('Contact saved', 'success');
+    } catch (err: unknown) {
+      const e = err as { status?: number };
+      if (e?.status === 409) {
+        toast('Already in your contacts', 'info');
+        setIsSavedContact(true);
+      } else {
+        toast('Failed to save contact', 'error');
+      }
+    }
+  };
+
   return (
     <>
       <div className="h-16 border-b border-theme-divider flex items-center justify-between px-4 bg-theme-app flex-shrink-0">
@@ -186,7 +223,7 @@ export const ChatHeader = memo(({ conversation }: ChatHeaderProps) => {
             <MoreVertical className="w-5 h-5" />
           </button>
           
-          {dropdownOpen && (
+            {dropdownOpen && (
             <div className="absolute top-12 right-0 w-56 bg-theme-app rounded-[12px] shadow-lg border border-theme-divider py-1 z-50 animate-in fade-in zoom-in-95 duration-150">
               <button 
                 onClick={handleHeaderClick}
@@ -194,6 +231,18 @@ export const ChatHeader = memo(({ conversation }: ChatHeaderProps) => {
               >
                 <Info className="w-4 h-4 text-theme-text-secondary" /> View info
               </button>
+              {conversation.type === 'direct' && (
+                <button 
+                  onClick={handleSaveContact}
+                  className="w-full text-left px-4 py-2.5 text-sm text-theme-text hover:bg-theme-row-hover flex items-center gap-3"
+                >
+                  {isSavedContact 
+                    ? <UserCheck className="w-4 h-4 text-theme-primary" />
+                    : <UserPlus className="w-4 h-4 text-theme-text-secondary" />
+                  }
+                  {isSavedContact ? 'Saved to contacts' : 'Save contact'}
+                </button>
+              )}
               <button 
                 onClick={handleToggleMute}
                 className="w-full text-left px-4 py-2.5 text-sm text-theme-text hover:bg-theme-row-hover flex items-center gap-3"

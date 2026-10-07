@@ -166,8 +166,9 @@ export const MessageList = ({ conversation, onReply }: MessageListProps) => {
 
     if (msg.message_type === 'system') {
       groupedElements.push(
-        <div key={msg.id} className="w-full flex justify-center my-2">
-          <span className="text-[12px] font-medium text-theme-text-secondary text-center px-4">
+        <div key={msg.id} className="w-full flex justify-center my-3">
+          <span className="inline-flex items-center gap-1.5 bg-theme-border/60 backdrop-blur-sm text-theme-text-secondary text-[12px] font-medium px-3 py-1 rounded-full border border-theme-divider/50">
+            <svg xmlns="http://www.w3.org/2000/svg" width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4"/><path d="M12 8h.01"/></svg>
             {msg.body}
           </span>
         </div>
