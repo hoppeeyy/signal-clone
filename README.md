@@ -1,86 +1,86 @@
-# ?? Signal Clone
+# 📡 Signal Clone
 
-A full-stack, real-time messaging application inspired by Signal � built with **Next.js 14**, **FastAPI**, and **WebSockets**. Supports end-to-end encrypted-style UX, group chats, file/image attachments, read receipts, reactions, typing indicators, presence, and more.
+A full-stack, real-time messaging application inspired by Signal — built with **Next.js 14**, **FastAPI**, and **WebSockets**. Supports end-to-end encrypted-style UX, group chats, file/image attachments, read receipts, reactions, typing indicators, presence, and more.
 
 > **Live repo:** [https://github.com/hoppeeyy/signal-clone](https://github.com/hoppeeyy/signal-clone)
 
 ---
 
-## ? Feature Highlights
+## ✨ Feature Highlights
 
 | Feature | Status |
 |---|---|
-| Phone/username login with OTP | ? |
-| JWT authentication | ? |
-| Real-time messaging via WebSocket | ? |
-| Direct (1-on-1) chats | ? |
-| Group chats (create, add/remove/leave members) | ? |
-| Image & file attachments (upload via REST, referenced in message) | ? |
-| Message read receipts (sent ? delivered ? read) | ? |
-| Reply-to / quote messages | ? |
-| Emoji reactions with per-user breakdown | ? |
-| Typing indicators | ? |
-| Online presence & last seen | ? |
-| Mute conversations | ? |
-| Delete messages (for me / for everyone) | ? |
-| Safety number verification | ? |
-| Contact management (save from chat, search) | ? |
-| Avatar upload from device | ? |
-| Group system notifications (added/removed/left/renamed) | ? |
-| Dark / light / system theme | ? |
-| Privacy settings (read receipts, typing, last seen) | ? |
-| Local disk storage for uploads (pluggable to Cloudinary) | ? |
-| Responsive mobile-first layout | ? |
+| Phone/username login with OTP | ✅ |
+| JWT authentication | ✅ |
+| Real-time messaging via WebSocket | ✅ |
+| Direct (1-on-1) chats | ✅ |
+| Group chats (create, add/remove/leave members) | ✅ |
+| Image & file attachments (upload via REST, referenced in message) | ✅ |
+| Message read receipts (sent → delivered → read) | ✅ |
+| Reply-to / quote messages | ✅ |
+| Emoji reactions with per-user breakdown | ✅ |
+| Typing indicators | ✅ |
+| Online presence & last seen | ✅ |
+| Mute conversations | ✅ |
+| Delete messages (for me / for everyone) | ✅ |
+| Safety number verification | ✅ |
+| Contact management (save from chat, search) | ✅ |
+| Avatar upload from device | ✅ |
+| Group system notifications (added/removed/left/renamed) | ✅ |
+| Dark / light / system theme | ✅ |
+| Privacy settings (read receipts, typing, last seen) | ✅ |
+| Local disk storage for uploads (pluggable to Cloudinary) | ✅ |
+| Responsive mobile-first layout | ✅ |
 
 ---
 
-## ??? Architecture
+## 🏗️ Architecture
 
 ```
 signal-clone/
-+-- frontend/          # Next.js 14 app (App Router)
-�   +-- src/
-�   �   +-- app/       # Pages & layouts
-�   �   +-- components/# UI components (chat, modals, sidebar)
-�   �   +-- hooks/     # useRealtime (WebSocket), custom hooks
-�   �   +-- store/     # Zustand stores (auth, messages, chats, presence�)
-�   �   +-- lib/       # fetchApi helper, types
-�   +-- .env.local     # NEXT_PUBLIC_API_URL, NEXT_PUBLIC_WS_URL
-�
-+-- backend/           # FastAPI (Python)
-�   +-- app/
-�   �   +-- api/       # REST routers (auth, conversations, messages, attachments�)
-�   �   +-- models/    # SQLAlchemy ORM models
-�   �   +-- schemas/   # Pydantic request/response schemas
-�   �   +-- services/  # Business logic (message, conversation, storage)
-�   �   +-- storage/   # Pluggable storage (LocalDiskStorage / Cloudinary stub)
-�   �   +-- ws/        # WebSocket connection manager
-�   �   +-- core/      # Config, database session
-�   +-- scripts/       # smoke_test.py, ws_test.py
-�   +-- .env           # SECRET_KEY, STORAGE_BACKEND, DATABASE_URL�
-�
-+-- docs/              # Schema, WS spec, UI spec
+├── frontend/          # Next.js 14 app (App Router)
+│   ├── src/
+│   │   ├── app/       # Pages & layouts
+│   │   ├── components/# UI components (chat, modals, sidebar)
+│   │   ├── hooks/     # useRealtime (WebSocket), custom hooks
+│   │   ├── store/     # Zustand stores (auth, messages, chats, presence…)
+│   │   └── lib/       # fetchApi helper, types
+│   └── .env.local     # NEXT_PUBLIC_API_URL, NEXT_PUBLIC_WS_URL
+│
+├── backend/           # FastAPI (Python)
+│   ├── app/
+│   │   ├── api/       # REST routers (auth, conversations, messages, attachments…)
+│   │   ├── models/    # SQLAlchemy ORM models
+│   │   ├── schemas/   # Pydantic request/response schemas
+│   │   ├── services/  # Business logic (message, conversation, storage)
+│   │   ├── storage/   # Pluggable storage (LocalDiskStorage / Cloudinary stub)
+│   │   ├── ws/        # WebSocket connection manager
+│   │   └── core/      # Config, database session
+│   ├── scripts/       # smoke_test.py, ws_test.py
+│   └── .env           # SECRET_KEY, STORAGE_BACKEND, DATABASE_URL…
+│
+└── docs/              # Schema, WS spec, UI spec
 ```
 
 ### Communication Flow
 
 ```
-Browser --REST--? FastAPI /api/*   (auth, CRUD, file upload)
-Browser --WS--?  FastAPI /ws/      (real-time events)
-FastAPI --?  SQLite (dev) / PostgreSQL (prod)
-FastAPI --?  uploads/ (LocalDisk) or Cloudinary
+Browser ──REST──► FastAPI /api/*   (auth, CRUD, file upload)
+Browser ──WS──►  FastAPI /ws/      (real-time events)
+FastAPI ──►  SQLite (dev) / PostgreSQL (prod)
+FastAPI ──►  uploads/ (LocalDisk) or Cloudinary
 ```
 
 > **Files never travel over WebSocket.** Attachments are uploaded via `POST /api/attachments/upload` first, then the returned `attachment_id` is referenced in the message payload.
 
 ---
 
-## ?? Getting Started
+## 🚀 Getting Started
 
 ### Prerequisites
 
-- **Node.js** = 18
-- **Python** = 3.11
+- **Node.js** ≥ 18
+- **Python** ≥ 3.11
 - **Git**
 
 ---
@@ -133,9 +133,9 @@ uvicorn app.main:app --host 127.0.0.1 --port 8001 --reload
 ```
 
 The server auto-creates the SQLite database and seeds demo users on first start.  
-Seeding is **idempotent** � restarting never duplicates data.
+Seeding is **idempotent** — restarting never duplicates data.
 
-?? Interactive API docs: [http://localhost:8001/docs](http://localhost:8001/docs)
+📖 Interactive API docs: [http://localhost:8001/docs](http://localhost:8001/docs)
 
 ---
 
@@ -163,11 +163,11 @@ NEXT_PUBLIC_WS_URL=ws://localhost:8001
 npm run dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) ??
+Open [http://localhost:3000](http://localhost:3000) 🎉
 
 ---
 
-## ?? Authentication
+## 🔐 Authentication
 
 The app uses **phone number or username + OTP** login.
 
@@ -179,41 +179,41 @@ All API requests use `Authorization: Bearer <token>`.
 
 ---
 
-## ?? WebSocket Protocol
+## 📡 WebSocket Protocol
 
 The frontend maintains a single persistent WebSocket connection at `/ws?token=<jwt>`.
 
 | Event | Direction | Payload |
 |---|---|---|
-| `new_message` | server ? client | Full message object |
-| `message_updated` | server ? client | Updated message (reactions, delete) |
-| `receipt_update` | server ? client | `{ message_id, user_id, status }` |
-| `typing` | client ? server | `{ conversation_id, is_typing }` |
-| `typing_indicator` | server ? client | `{ conversation_id, user_id, is_typing }` |
-| `presence_update` | server ? client | `{ user_id, is_online, last_seen }` |
-| `conversation_updated` | server ? client | Group renamed, avatar changed |
-| `group.member_added` | server ? client | `{ conversation_id, added_user_ids }` |
-| `group.member_removed` | server ? client | `{ conversation_id, removed_user_id }` |
+| `new_message` | server → client | Full message object |
+| `message_updated` | server → client | Updated message (reactions, delete) |
+| `receipt_update` | server → client | `{ message_id, user_id, status }` |
+| `typing` | client → server | `{ conversation_id, is_typing }` |
+| `typing_indicator` | server → client | `{ conversation_id, user_id, is_typing }` |
+| `presence_update` | server → client | `{ user_id, is_online, last_seen }` |
+| `conversation_updated` | server → client | Group renamed, avatar changed |
+| `group.member_added` | server → client | `{ conversation_id, added_user_ids }` |
+| `group.member_removed` | server → client | `{ conversation_id, removed_user_id }` |
 
 ---
 
-## ?? Attachment System
+## 📎 Attachment System
 
 ```
 1. Client: POST /api/attachments/upload (multipart/form-data)
-           ? { id, url, kind, mime_type, size_bytes, ... }
+           ← { id, url, kind, mime_type, size_bytes, ... }
 
 2. Client: POST /api/conversations/{id}/messages
            Body: { body: "Look at this!", attachment_ids: [42] }
 ```
 
-- **`local`** � files saved to `backend/uploads/`, served at `/uploads/<key>`  
-- **`cloudinary`** � stub in `backend/app/storage/cloudinary_storage.py`  
+- **`local`** — files saved to `backend/uploads/`, served at `/uploads/<key>`  
+- **`cloudinary`** — stub in `backend/app/storage/cloudinary_storage.py`  
 - Switch backends via `STORAGE_BACKEND=local|cloudinary` in `.env`
 
 ---
 
-## ??? Database Schema
+## 🗃️ Database Schema
 
 | Table | Description |
 |---|---|
@@ -221,7 +221,7 @@ The frontend maintains a single persistent WebSocket connection at `/ws?token=<j
 | `user_settings` | Privacy & notification preferences per user |
 | `conversations` | Direct and group conversations |
 | `conversation_members` | Membership, role (admin/member), mute, last_read |
-| `messages` | All messages � text, system, attachment |
+| `messages` | All messages — text, system, attachment |
 | `message_receipts` | Per-user delivery and read timestamps |
 | `reactions` | Emoji reactions with user references |
 | `attachments` | Uploaded files linked to messages |
@@ -229,7 +229,7 @@ The frontend maintains a single persistent WebSocket connection at `/ws?token=<j
 
 ---
 
-## ?? Testing
+## 🧪 Testing
 
 ### Backend
 
@@ -256,7 +256,7 @@ npm run build         # Production build (catches all errors)
 
 ---
 
-## ?? Design System
+## 🎨 Design System
 
 - **Framework:** Next.js 14 App Router + React 18
 - **Styling:** Tailwind CSS + custom CSS variables
@@ -278,11 +278,11 @@ npm run build         # Production build (catches all errors)
 
 ---
 
-## ?? Key Source Files
+## 📂 Key Source Files
 
 | File | Purpose |
 |---|---|
-| `frontend/src/hooks/useRealtime.ts` | WS listener � dispatches all real-time events to Zustand stores |
+| `frontend/src/hooks/useRealtime.ts` | WS listener — dispatches all real-time events to Zustand stores |
 | `frontend/src/store/messages.ts` | Per-conversation message state, optimistic updates |
 | `frontend/src/store/chats.ts` | Sidebar conversation list |
 | `frontend/src/store/presence.ts` | Online/offline status map |
@@ -290,7 +290,7 @@ npm run build         # Production build (catches all errors)
 | `frontend/src/components/chat/Composer.tsx` | Input bar with attachment picker and emoji |
 | `frontend/src/components/chat/ChatHeader.tsx` | Header with contact info, save contact, mute, group info |
 | `frontend/src/components/SettingsModal.tsx` | Profile (avatar upload), appearance, privacy, notifications |
-| `backend/app/api/conversations.py` | Group CRUD � create, add/remove members, system messages |
+| `backend/app/api/conversations.py` | Group CRUD — create, add/remove members, system messages |
 | `backend/app/api/messages.py` | Message send, receipts, reactions, delete |
 | `backend/app/api/attachments.py` | File upload endpoint |
 | `backend/app/storage/local_storage.py` | Local disk storage implementation |
@@ -298,7 +298,7 @@ npm run build         # Production build (catches all errors)
 
 ---
 
-## ?? Configuration Reference
+## ⚙️ Configuration Reference
 
 ### Backend `.env`
 
@@ -320,7 +320,7 @@ npm run build         # Production build (catches all errors)
 
 ---
 
-## ?? Deployment
+## 🚢 Deployment
 
 1. **Database:** Use `DATABASE_URL=postgresql://...` for production
 2. **Storage:** Set `STORAGE_BACKEND=cloudinary` and add credentials to `.env`
@@ -330,7 +330,7 @@ npm run build         # Production build (catches all errors)
 
 ---
 
-## ?? Contributing
+## 🤝 Contributing
 
 ```bash
 # 1. Fork & clone
@@ -346,17 +346,17 @@ git push origin feature/your-feature
 
 ---
 
-## ?? License
+## 📄 License
 
-MIT � 2024 hoppeeyy
+MIT © 2024 hoppeeyy
 
 ---
 
-## ?? Acknowledgements
+## 🙏 Acknowledgements
 
-- [Signal](https://signal.org) � original design inspiration
-- [FastAPI](https://fastapi.tiangolo.com) � Python web framework
-- [Next.js](https://nextjs.org) � React framework
-- [Zustand](https://zustand-demo.pmnd.rs) � state management
-- [Tailwind CSS](https://tailwindcss.com) � utility-first styling
-- [Lucide](https://lucide.dev) � icons
+- [Signal](https://signal.org) — original design inspiration
+- [FastAPI](https://fastapi.tiangolo.com) — Python web framework
+- [Next.js](https://nextjs.org) — React framework
+- [Zustand](https://zustand-demo.pmnd.rs) — state management
+- [Tailwind CSS](https://tailwindcss.com) — utility-first styling
+- [Lucide](https://lucide.dev) — icons
