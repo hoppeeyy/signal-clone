@@ -24,6 +24,8 @@ const dotClasses = {
 };
 
 export const Avatar: React.FC<AvatarProps> = ({ src, initials, size = 'md', isOnline, className }) => {
+  const [imageError, setImageError] = React.useState(false);
+
   return (
     <div className={cn('relative inline-block', className)}>
       <div
@@ -32,10 +34,15 @@ export const Avatar: React.FC<AvatarProps> = ({ src, initials, size = 'md', isOn
           sizeClasses[size]
         )}
       >
-        {src ? (
+        {src && !imageError ? (
           <>
             {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img src={src.startsWith('/') ? `${(process.env.NEXT_PUBLIC_API_URL as string).replace(/\/api$/, '')}${src}` : src} alt="Avatar" className="w-full h-full object-cover" />
+            <img 
+              src={src.startsWith('/') ? `${(process.env.NEXT_PUBLIC_API_URL as string).replace(/\/api$/, '')}${src}` : src} 
+              alt="Avatar" 
+              className="w-full h-full object-cover"
+              onError={() => setImageError(true)}
+            />
           </>
         ) : (
           <span>{initials?.substring(0, 2).toUpperCase() || '?'}</span>

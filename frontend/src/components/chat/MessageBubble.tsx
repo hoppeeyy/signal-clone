@@ -215,6 +215,7 @@ export const MessageBubble = memo(({ message, isOwn, isGroup, isFirstInGroup, is
                         alt={img.original_name} 
                         className="w-full h-full object-cover transition-transform hover:scale-105"
                         onClick={() => window.open(img.url, '_blank')}
+                        onError={(e) => { e.currentTarget.parentElement!.style.display = 'none'; }}
                       />
                     </div>
                   ))}
