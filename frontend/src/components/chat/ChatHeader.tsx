@@ -52,8 +52,8 @@ export const ChatHeader = memo(({ conversation }: ChatHeaderProps) => {
     if (conversation.type === 'direct') {
       const otherUser = conversation.members?.find(m => m.user_id !== currentUser?.id);
       if (otherUser) {
-        fetchApi<{ id: number }[]>('/contacts').then(contacts => {
-          setIsSavedContact(contacts.some(c => c.id === otherUser.user_id || (c as unknown as { contact_user_id: number }).contact_user_id === otherUser.user_id));
+        fetchApi<{ id: number; contact_user: { id: number } }[]>('/contacts').then(contacts => {
+          setIsSavedContact(contacts.some(c => c.contact_user?.id === otherUser.user_id));
         }).catch(() => {});
       }
     }

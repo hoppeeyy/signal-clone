@@ -84,7 +84,7 @@ def create_group(data: GroupCreate, background_tasks: BackgroundTasks, current_u
             
     sys_msg = Message(
         conversation_id=conv.id,
-        body=f"{current_user.display_name} created the group",
+        body=f"{{user:{current_user.id}}} created the group",
         message_type=MessageType.system
     )
     db.add(sys_msg)
@@ -169,7 +169,7 @@ def update_group(id: int, data: GroupUpdate, background_tasks: BackgroundTasks, 
     if data.name is not None and data.name != conv.name:
         sys_msg = Message(
             conversation_id=conv.id,
-            body=f"{current_user.display_name} renamed the group to {data.name}",
+            body=f"{{user:{current_user.id}}} renamed the group to {data.name}",
             message_type=MessageType.system
         )
         db.add(sys_msg)
@@ -178,7 +178,7 @@ def update_group(id: int, data: GroupUpdate, background_tasks: BackgroundTasks, 
     if data.avatar_url is not None and data.avatar_url != conv.avatar_url:
         sys_msg = Message(
             conversation_id=conv.id,
-            body=f"{current_user.display_name} changed the group avatar",
+            body=f"{{user:{current_user.id}}} changed the group avatar",
             message_type=MessageType.system
         )
         db.add(sys_msg)
@@ -218,10 +218,10 @@ def add_member(id: int, data: MemberAdd, background_tasks: BackgroundTasks, curr
     if not added_users:
         return {"message": "No new members added"}
         
-    names = ", ".join([u.display_name for u in added_users])
+    names = ", ".join([f"{{user:{u.id}}}" for u in added_users])
     sys_msg = Message(
         conversation_id=conv.id,
-        body=f"{current_user.display_name} added {names}",
+        body=f"{{user:{current_user.id}}} added {names}",
         message_type=MessageType.system
     )
     db.add(sys_msg)
@@ -266,10 +266,10 @@ def remove_member(id: int, user_id: int, background_tasks: BackgroundTasks, curr
             if oldest:
                 oldest.role = MemberRole.admin
     
-    action = "left" if user_id == current_user.id else f"removed {target_member.user.display_name}"
+    action = "left" if user_id == current_user.id else f"removed {{user:{target_member.user.id}}}"
     sys_msg = Message(
         conversation_id=conv.id,
-        body=f"{current_user.display_name} {action}",
+        body=f"{{user:{current_user.id}}} {action}",
         message_type=MessageType.system
     )
     db.add(sys_msg)

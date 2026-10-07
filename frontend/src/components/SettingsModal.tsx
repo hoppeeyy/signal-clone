@@ -82,16 +82,13 @@ export const SettingsModal = ({ isOpen, onClose }: SettingsModalProps) => {
     try {
       const form = new FormData();
       form.append('file', file);
-      const token = typeof window !== 'undefined' ? localStorage.getItem('token') : null;
-      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8001'}/api/attachments/upload`, {
+      const data = await fetchApi<User>('/users/me/avatar', {
         method: 'POST',
-        headers: token ? { Authorization: `Bearer ${token}` } : {},
         body: form,
       });
-      if (!res.ok) throw new Error('Upload failed');
-      const data = await res.json();
-      setAvatarUrl(data.url);
-      toast('Photo ready — click Save to apply', 'info');
+      setAvatarUrl(data.avatar_url || '');
+      updateUser(data);
+      toast('Photo updated successfully', 'success');
     } catch {
       toast('Failed to upload photo', 'error');
     } finally {
