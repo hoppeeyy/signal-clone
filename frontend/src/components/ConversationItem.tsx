@@ -45,7 +45,7 @@ export const ConversationItem = memo(({ conversation, isSelected }: Conversation
       avatarUrl = conversation.avatar_url || undefined;
       initials = title.charAt(0).toUpperCase();
       // If we have display_name from list read, it also gave is_online
-      isOnline = (conversation as any).is_online || false;
+      isOnline = (conversation as Conversation & { is_online?: boolean }).is_online || false;
     } else {
       const otherUser = conversation.members?.find(m => m.user_id !== currentUser?.id);
       if (otherUser) {

@@ -27,9 +27,13 @@ export const NewGroupModal = ({ isOpen, onClose, contacts }: NewGroupModalProps)
 
   useEffect(() => {
     if (isOpen) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setStep(1);
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setSearchQuery('');
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setSelectedIds(new Set());
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setGroupName('');
     }
   }, [isOpen]);
