@@ -21,6 +21,10 @@ class ReceiptStatus(str, enum.Enum):
     delivered = "delivered"
     read = "read"
 
+class AttachmentKind(str, enum.Enum):
+    image = "image"
+    file = "file"
+
 class User(Base):
     __tablename__ = "users"
 
@@ -120,6 +124,7 @@ class Message(Base):
     replies = relationship("Message", backref="reply_to", remote_side=[id])
     receipts = relationship("MessageReceipt", back_populates="message", cascade="all, delete-orphan")
     reactions = relationship("Reaction", back_populates="message", cascade="all, delete-orphan")
+    attachments = relationship("Attachment", back_populates="message", cascade="all, delete-orphan")
 
 class MessageReceipt(Base):
     __tablename__ = "message_receipts"
@@ -159,3 +164,22 @@ class MessageHidden(Base):
 
     message = relationship("Message")
     user = relationship("User")
+
+class Attachment(Base):
+    __tablename__ = "attachments"
+
+    id = Column(Integer, primary_key=True, index=True)
+    message_id = Column(Integer, ForeignKey("messages.id", ondelete="CASCADE"), nullable=True, index=True)
+    uploader_id = Column(Integer, ForeignKey("users.id", ondelete="CASCADE"), nullable=False)
+    storage_key = Column(String, nullable=False, unique=True)
+    original_name = Column(String, nullable=False)
+    mime_type = Column(String, nullable=False)
+    size_bytes = Column(Integer, nullable=False)
+    width = Column(Integer, nullable=True)
+    height = Column(Integer, nullable=True)
+    kind = Column(Enum(AttachmentKind), nullable=False)
+    created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))
+
+    message = relationship("Message", back_populates="attachments")
+    uploader = relationship("User")
+

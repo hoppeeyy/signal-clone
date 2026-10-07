@@ -122,9 +122,10 @@ async def websocket_endpoint(websocket: WebSocket, token: str):
                 body = payload.get("body")
                 reply_to_id = payload.get("reply_to_id")
                 client_temp_id = payload.get("client_temp_id")
+                attachment_ids = payload.get("attachment_ids")
                 
-                if conv_id and body:
-                    msg_dict = await send_message_ws_logic(db, conv_id, user.id, body, reply_to_id)
+                if conv_id and (body or attachment_ids):
+                    msg_dict = await send_message_ws_logic(db, conv_id, user.id, body, reply_to_id, attachment_ids)
                     if msg_dict:
                         if "error" in msg_dict:
                             await websocket.send_text(json.dumps({

@@ -154,8 +154,24 @@ class MessageReceiptRead(BaseModel):
 
 # Message
 class MessageCreate(BaseModel):
-    body: str
+    body: Optional[str] = None
     reply_to_id: Optional[int] = None
+    attachment_ids: Optional[List[int]] = None
+
+class AttachmentRead(BaseModel):
+    id: int
+    message_id: Optional[int]
+    uploader_id: int
+    original_name: str
+    mime_type: str
+    size_bytes: int
+    width: Optional[int] = None
+    height: Optional[int] = None
+    kind: str
+    url: str
+
+    class Config:
+        from_attributes = True
 
 class ReactionCreate(BaseModel):
     emoji: str
@@ -172,6 +188,7 @@ class MessageRead(BaseModel):
     sender_summary: Optional[Dict[str, Any]] = None
     reply_to_preview: Optional[Dict[str, Any]] = None
     reactions_grouped: List[Dict[str, Any]] = []
+    attachments: List[AttachmentRead] = []
     status: str
 
     class Config:

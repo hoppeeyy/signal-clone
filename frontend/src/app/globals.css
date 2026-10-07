@@ -1,0 +1,76 @@
+@import "tailwindcss";
+
+@theme {
+  --color-theme-app: var(--bg-app);
+  --color-theme-sidebar: var(--bg-sidebar);
+  --color-theme-chat: var(--bg-chat);
+  --color-theme-primary: var(--primary);
+  --color-theme-primary-hover: var(--primary-hover);
+  --color-theme-bubble-in: var(--bubble-in);
+  --color-theme-bubble-in-text: var(--bubble-in-text);
+  --color-theme-bubble-out: var(--bubble-out);
+  --color-theme-bubble-out-text: var(--bubble-out-text);
+  --color-theme-text: var(--text-primary);
+  --color-theme-text-secondary: var(--text-secondary);
+  --color-theme-divider: var(--divider);
+  --color-theme-row-hover: var(--row-hover);
+  --color-theme-row-active: var(--row-active);
+  --color-theme-danger: var(--danger);
+  --color-theme-online: var(--online-dot);
+  --color-theme-input: var(--input-bg);
+
+  --radius-12: 12px;
+  --radius-16: 16px;
+  --radius-18: 18px;
+  --radius-pill: 9999px;
+}
+
+:root {
+  --bg-app: #FFFFFF;
+  --bg-sidebar: #FFFFFF;
+  --bg-chat: #FFFFFF;
+  --primary: #2C6BED;
+  --primary-hover: #1F57CB;
+  --bubble-in: #E9E9E9;
+  --bubble-in-text: #1B1B1B;
+  --bubble-out: #2C6BED;
+  --bubble-out-text: #FFFFFF;
+  --text-primary: #1B1B1B;
+  --text-secondary: #6E6E73;
+  --divider: #E9E9E9;
+  --row-hover: #F6F6F6;
+  --row-active: #E9E9E9;
+  --danger: #D73C3C;
+  --online-dot: #2EB85C;
+  --input-bg: #F0F0F0;
+}
+
+.dark {
+  --bg-app: #1B1B1B;
+  --bg-sidebar: #1B1B1B;
+  --bg-chat: #1B1B1B;
+  --primary: #2C6BED;
+  --primary-hover: #1F57CB;
+  --bubble-in: #3B3B3B;
+  --bubble-in-text: #FFFFFF;
+  --bubble-out: #2C6BED;
+  --bubble-out-text: #FFFFFF;
+  --text-primary: #FFFFFF;
+  --text-secondary: #A0A0A5;
+  --divider: #2E2E2E;
+  --row-hover: #252525;
+  --row-active: #2E2E2E;
+  --danger: #D73C3C;
+  --online-dot: #2EB85C;
+  --input-bg: #2A2A2A;
+}
+
+@layer base {
+  body {
+    background-color: var(--bg-app);
+    color: var(--text-primary);
+    font-family: var(--font-inter), system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+}

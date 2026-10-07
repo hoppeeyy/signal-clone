@@ -52,16 +52,46 @@ def format_message(msg: Message, user_id: int, conv: Conversation, contact_map: 
     reply_preview = None
     if msg.reply_to:
         reply_is_deleted = msg.reply_to.deleted_at is not None
+        
+        reply_text = msg.reply_to.body
+        if not reply_text and msg.reply_to.attachments:
+            att = msg.reply_to.attachments[0]
+            if getattr(att, "kind", None) and att.kind.value == "image":
+                reply_text = "📷 Photo"
+            else:
+                reply_text = f"📎 {att.original_name}"
+        elif reply_text and msg.reply_to.attachments:
+            reply_text = f"📷 {reply_text}"
+            
         reply_preview = {
             "id": msg.reply_to.id,
             "sender_id": msg.reply_to.sender_id,
             "sender_name": contact_map.get(msg.reply_to.sender.id, msg.reply_to.sender.display_name) if msg.reply_to.sender else None,
-            "text_preview": (msg.reply_to.body[:100] + '...') if msg.reply_to.body and len(msg.reply_to.body) > 100 else msg.reply_to.body if not reply_is_deleted else None,
+            "text_preview": (reply_text[:100] + '...') if reply_text and len(reply_text) > 100 else reply_text if not reply_is_deleted else None,
             "type": msg.reply_to.message_type.value,
             "deleted": reply_is_deleted
         }
         
     is_deleted = msg.deleted_at is not None
+    
+    from app.storage import get_storage
+    from app.core.config import settings
+    
+    attachments_list = []
+    for att in msg.attachments:
+        url = f"{settings.PUBLIC_API_URL}/{settings.UPLOAD_DIR}/{att.storage_key}"
+        attachments_list.append({
+            "id": att.id,
+            "message_id": att.message_id,
+            "uploader_id": att.uploader_id,
+            "original_name": att.original_name,
+            "mime_type": att.mime_type,
+            "size_bytes": att.size_bytes,
+            "width": att.width,
+            "height": att.height,
+            "kind": att.kind.value,
+            "url": url
+        })
         
     return {
         "id": msg.id,
@@ -74,6 +104,7 @@ def format_message(msg: Message, user_id: int, conv: Conversation, contact_map: 
         "sender_summary": sender_summary,
         "reply_to_preview": reply_preview,
         "reactions_grouped": reactions_grouped,
+        "attachments": attachments_list,
         "status": status,
         "deleted": is_deleted
     }
@@ -88,7 +119,8 @@ def get_messages(db: Session, conversation_id: int, user_id: int, limit: int = 3
         selectinload(Message.sender),
         selectinload(Message.reply_to).selectinload(Message.sender),
         selectinload(Message.receipts),
-        selectinload(Message.reactions)
+        selectinload(Message.reactions),
+        selectinload(Message.attachments)
     ).filter(
         Message.conversation_id == conversation_id,
         Message.id.not_in(hidden_subq)
@@ -110,8 +142,9 @@ def get_messages(db: Session, conversation_id: int, user_id: int, limit: int = 3
         results.append(format_message(msg, user_id, conv, contact_map))
     return results
 
-async def send_message_ws_logic(db: Session, conv_id: int, sender_id: int, body: str, reply_to_id: Optional[int] = None):
+async def send_message_ws_logic(db: Session, conv_id: int, sender_id: int, body: str, reply_to_id: Optional[int] = None, attachment_ids: Optional[List[int]] = None):
     from app.ws.manager import manager
+    from app.models.models import Attachment, MessageType
     
     conv = db.query(Conversation).get(conv_id)
     if not conv or not any(m.user_id == sender_id for m in conv.members):
@@ -122,15 +155,36 @@ async def send_message_ws_logic(db: Session, conv_id: int, sender_id: int, body:
         if not replied_msg or replied_msg.conversation_id != conv_id or replied_msg.deleted_at is not None:
             return {"error": "Invalid reply_to_id"}
         
+    # Validate attachments
+    attachments_to_link = []
+    if attachment_ids:
+        # Max 10 limit
+        if len(attachment_ids) > 10:
+            return {"error": "Maximum 10 attachments allowed"}
+        for att_id in attachment_ids:
+            att = db.query(Attachment).get(att_id)
+            if not att or att.uploader_id != sender_id or att.message_id is not None:
+                return {"error": "Invalid attachment(s)"}
+            attachments_to_link.append(att)
+
+    msg_type = MessageType.text
+    if attachments_to_link:
+        msg_type = MessageType.attachment
+
     msg = Message(
         conversation_id=conv_id,
         sender_id=sender_id,
         body=body,
-        reply_to_id=reply_to_id
+        reply_to_id=reply_to_id,
+        message_type=msg_type
     )
     db.add(msg)
     conv.updated_at = datetime.now(timezone.utc)
     db.flush()
+    
+    for att in attachments_to_link:
+        att.message_id = msg.id
+        
     db.refresh(msg)
     
     member_ids = [m.user_id for m in conv.members if m.user_id != sender_id]
@@ -149,7 +203,8 @@ async def send_message_ws_logic(db: Session, conv_id: int, sender_id: int, body:
         selectinload(Message.sender),
         selectinload(Message.reply_to).selectinload(Message.sender),
         selectinload(Message.receipts),
-        selectinload(Message.reactions)
+        selectinload(Message.reactions),
+        selectinload(Message.attachments)
     ).filter(Message.id == msg.id).first()
 
     # Broadcast to others

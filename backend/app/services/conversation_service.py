@@ -43,7 +43,8 @@ def get_conversations(db: Session, user_id: int, q: str = None):
         
         # Last message
         last_msg = None
-        last_msg_model = db.query(Message).filter(Message.conversation_id == conv.id).order_by(Message.created_at.desc()).first()
+        from sqlalchemy.orm import selectinload
+        last_msg_model = db.query(Message).options(selectinload(Message.attachments)).filter(Message.conversation_id == conv.id).order_by(Message.created_at.desc()).first()
         if last_msg_model:
             status = "sent"
             if last_msg_model.sender_id != user_id:
@@ -65,8 +66,18 @@ def get_conversations(db: Session, user_id: int, q: str = None):
             if last_msg_model.sender:
                 sender_name = contact_map.get(last_msg_model.sender_id, last_msg_model.sender.display_name)
 
+            body_preview = last_msg_model.body
+            if not body_preview and last_msg_model.attachments:
+                att = last_msg_model.attachments[0]
+                if getattr(att, "kind", None) and att.kind.value == "image":
+                    body_preview = "📷 Photo"
+                else:
+                    body_preview = f"📎 {att.original_name}"
+            elif body_preview and last_msg_model.attachments:
+                body_preview = f"📷 {body_preview}"
+
             last_msg = {
-                "body": last_msg_model.body,
+                "body": body_preview,
                 "sender_id": last_msg_model.sender_id,
                 "sender_name": sender_name,
                 "message_type": last_msg_model.message_type.value,

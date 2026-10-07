@@ -4,8 +4,13 @@ from sqlalchemy.orm import Session
 from app.core.database import SessionLocal, Base, engine
 from app.models.models import (
     User, UserSettings, Contact, Conversation, ConversationMember, 
-    Message, MessageReceipt, ConversationType, MemberRole, MessageType, ReceiptStatus
+    Message, MessageReceipt, ConversationType, MemberRole, MessageType, ReceiptStatus, Attachment, AttachmentKind
 )
+import io
+import uuid
+import os
+from PIL import Image, ImageDraw
+from app.storage import get_storage
 
 def get_random_date():
     now = datetime.now(timezone.utc)
@@ -138,7 +143,46 @@ def seed_db():
 
     from app.models.models import Reaction
     emojis = ["👍", "❤️", "😂", "😮", "😢", "🙏"]
-    for conv, members in conversations:
+    
+    # Pre-generate attachments for seed
+    storage = get_storage()
+    seed_attachments = []
+    # 3 Images
+    colors = ["red", "green", "blue"]
+    for i, color in enumerate(colors):
+        img = Image.new('RGB', (300, 300), color=color)
+        d = ImageDraw.Draw(img)
+        d.text((10,10), f"Sample {color}", fill=(255,255,255))
+        img_bytes = io.BytesIO()
+        img.save(img_bytes, format='JPEG')
+        img_bytes.seek(0)
+        file_name = f"sample_{color}.jpg"
+        result = storage.save(img_bytes, file_name)
+        seed_attachments.append({
+            "original_name": file_name,
+            "mime_type": "image/jpeg",
+            "size_bytes": img_bytes.getbuffer().nbytes,
+            "width": 300,
+            "height": 300,
+            "kind": AttachmentKind.image,
+            "storage_key": result["storage_key"]
+        })
+        
+    # 1 Text file
+    text_content = b"This is a sample document for testing attachments."
+    text_bytes = io.BytesIO(text_content)
+    result = storage.save(text_bytes, "document.txt")
+    seed_attachments.append({
+        "original_name": "document.txt",
+        "mime_type": "text/plain",
+        "size_bytes": len(text_content),
+        "width": None,
+        "height": None,
+        "kind": AttachmentKind.file,
+        "storage_key": result["storage_key"]
+    })
+
+    for conv_index, (conv, members) in enumerate(conversations):
         num_msgs = random.randint(10, 30)
         base_time = conv.created_at
         
@@ -151,17 +195,41 @@ def seed_db():
             if previous_msgs and random.random() < 0.3: # 30% chance to reply
                 reply_to_id = random.choice(previous_msgs).id
                 
+            msg_type = MessageType.text
+            
+            # Add attachment to some messages
+            attach_data = None
+            if i == 5 and conv_index in (0, 5): # one DM and one group
+                attach_data = seed_attachments[0]
+            elif i == 8 and conv_index in (0, 5):
+                attach_data = seed_attachments[1]
+            elif i == 11 and conv_index in (0, 5):
+                attach_data = seed_attachments[3] # Text file
+            
+            if attach_data:
+                msg_type = MessageType.attachment
+                
             msg = Message(
                 conversation_id=conv.id,
                 sender_id=sender.id,
-                body=random.choice(message_bodies),
-                message_type=MessageType.text,
+                body=random.choice(message_bodies) if not attach_data or random.random() < 0.5 else None,
+                message_type=msg_type,
                 created_at=base_time,
                 reply_to_id=reply_to_id
             )
             db.add(msg)
             db.commit()
             db.refresh(msg)
+            
+            if attach_data:
+                att = Attachment(
+                    message_id=msg.id,
+                    uploader_id=sender.id,
+                    **attach_data
+                )
+                db.add(att)
+                db.commit()
+            
             previous_msgs.append(msg)
             
             # Receipts for others
