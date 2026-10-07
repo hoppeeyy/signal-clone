@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { Modal } from '@/components/ui/Modal';
 import { useAuthStore } from '@/store/auth';
+import { useChatsStore } from '@/store/chats';
 import { fetchApi } from '@/lib/api';
 import { useToast } from '@/components/ui/Toast';
 import { Avatar } from '@/components/ui/Avatar';
@@ -17,6 +18,7 @@ type Tab = 'profile' | 'appearance' | 'privacy' | 'notifications' | 'chats' | 'l
 
 export const SettingsModal = ({ isOpen, onClose }: SettingsModalProps) => {
   const { user, updateUser } = useAuthStore();
+  const fetchConversations = useChatsStore(s => s.fetchConversations);
   const toast = useToast();
   
   const [activeTab, setActiveTab] = useState<Tab>('profile');
@@ -67,6 +69,7 @@ export const SettingsModal = ({ isOpen, onClose }: SettingsModalProps) => {
         body: JSON.stringify({ display_name: displayName, about, avatar_url: avatarUrl })
       });
       updateUser(updated);
+      fetchConversations();
       toast('Profile updated', 'success');
     } catch {
       toast('Failed to update profile', 'error');
@@ -88,6 +91,7 @@ export const SettingsModal = ({ isOpen, onClose }: SettingsModalProps) => {
       });
       setAvatarUrl(data.avatar_url || '');
       updateUser(data);
+      fetchConversations();
       toast('Photo updated successfully', 'success');
     } catch {
       toast('Failed to upload photo', 'error');

@@ -46,6 +46,7 @@ export const ChatHeader = memo(({ conversation }: ChatHeaderProps) => {
   const [isSavedContact, setIsSavedContact] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
   const upsertConversation = useChatsStore(s => s.upsertConversation);
+  const fetchConversations = useChatsStore(s => s.fetchConversations);
 
   // Check if other user is already a contact
   useEffect(() => {
@@ -174,6 +175,7 @@ export const ChatHeader = memo(({ conversation }: ChatHeaderProps) => {
         body: JSON.stringify({ identifier: String(otherUser.user_id), nickname: nickname.trim() || undefined })
       });
       setIsSavedContact(true);
+      fetchConversations();
       toast('Contact saved', 'success');
     } catch (err: unknown) {
       const e = err as { status?: number };
