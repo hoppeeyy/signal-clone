@@ -23,13 +23,15 @@ export const AddMembersModal = ({ isOpen, onClose, conversation }: AddMembersMod
 
   useEffect(() => {
     if (isOpen) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setSearchQuery('');
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setSelectedIds(new Set());
       const loadContacts = async () => {
         try {
           const data = await fetchApi<Contact[]>('/contacts');
           setContacts(data);
-        } catch (e) {
+        } catch {
           // ignore
         }
       };

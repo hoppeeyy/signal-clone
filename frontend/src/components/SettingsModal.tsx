@@ -48,8 +48,11 @@ export const SettingsModal = ({ isOpen, onClose }: SettingsModalProps) => {
         }
       };
       loadSettings();
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setDisplayName(user?.display_name || '');
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setAbout(user?.about || '');
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setAvatarUrl(user?.avatar_url || '');
     }
   }, [isOpen, user, toast]);
@@ -225,7 +228,7 @@ export const SettingsModal = ({ isOpen, onClose }: SettingsModalProps) => {
                   <div className="flex items-center justify-between">
                     <div className="flex flex-col">
                       <span className="font-medium">Read receipts</span>
-                      <span className="text-xs text-theme-text-secondary">If disabled, you won't be able to see read receipts from others.</span>
+                      <span className="text-xs text-theme-text-secondary">If disabled, you won&apos;t be able to see read receipts from others.</span>
                     </div>
                     <label className="relative inline-flex items-center cursor-pointer">
                       <input type="checkbox" className="sr-only peer" checked={settings.read_receipts} onChange={e => updateSetting({ read_receipts: e.target.checked })} />
@@ -236,7 +239,7 @@ export const SettingsModal = ({ isOpen, onClose }: SettingsModalProps) => {
                   <div className="flex items-center justify-between">
                     <div className="flex flex-col">
                       <span className="font-medium">Typing indicators</span>
-                      <span className="text-xs text-theme-text-secondary">If disabled, you won't be able to see typing indicators from others.</span>
+                      <span className="text-xs text-theme-text-secondary">If disabled, you won&apos;t be able to see typing indicators from others.</span>
                     </div>
                     <label className="relative inline-flex items-center cursor-pointer">
                       <input type="checkbox" className="sr-only peer" checked={settings.typing_indicators} onChange={e => updateSetting({ typing_indicators: e.target.checked })} />
