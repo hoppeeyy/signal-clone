@@ -1,0 +1,56 @@
+import os
+from fastapi import APIRouter, Depends, HTTPException, status, UploadFile, File
+from sqlalchemy.orm import Session
+from app.core.database import get_db
+from app.models.models import User
+from app.schemas.schemas import UserRead, UserUpdate
+from app.api.deps import get_current_user
+
+router = APIRouter(prefix="/api/users", tags=["users"])
+
+@router.put("/me", response_model=UserRead)
+def update_me(data: UserUpdate, current_user: User = Depends(get_current_user), db: Session = Depends(get_db)):
+    if data.display_name is not None:
+        current_user.display_name = data.display_name
+    if data.about is not None:
+        current_user.about = data.about
+    db.commit()
+    db.refresh(current_user)
+    return current_user
+
+@router.post("/me/avatar", response_model=UserRead)
+async def upload_avatar(
+    file: UploadFile = File(...), 
+    current_user: User = Depends(get_current_user), 
+    db: Session = Depends(get_db)
+):
+    if not file.content_type.startswith("image/"):
+        raise HTTPException(status_code=400, detail="Invalid file type")
+    
+    contents = await file.read()
+    if len(contents) > 2 * 1024 * 1024:
+        raise HTTPException(status_code=400, detail="File too large")
+    
+    upload_dir = "uploads/avatars"
+    os.makedirs(upload_dir, exist_ok=True)
+    
+    file_path = f"{upload_dir}/{current_user.id}_{file.filename}"
+    with open(file_path, "wb") as f:
+        f.write(contents)
+    
+    current_user.avatar_url = f"/{file_path}"
+    db.commit()
+    db.refresh(current_user)
+    return current_user
+
+@router.get("/search", response_model=list[UserRead])
+def search_users(q: str, current_user: User = Depends(get_current_user), db: Session = Depends(get_db)):
+    users = db.query(User).filter(
+        (User.id != current_user.id) & 
+        (
+            (User.display_name.ilike(f"%{q}%")) | 
+            (User.phone_number.ilike(f"%{q}%")) | 
+            (User.username.ilike(f"%{q}%"))
+        )
+    ).limit(20).all()
+    return users
