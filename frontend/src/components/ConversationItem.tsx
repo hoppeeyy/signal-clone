@@ -64,7 +64,20 @@ export const ConversationItem = memo(({ conversation, isSelected }: Conversation
   let previewText = '';
   if (lastMsg) {
     if (lastMsg.message_type === 'system') {
-      previewText = lastMsg.body || '';
+      let parsed = lastMsg.body || '';
+      if (parsed.includes('{user:')) {
+        const matches = parsed.match(/\{user:(\d+)\}/g);
+        if (matches) {
+          matches.forEach(match => {
+            const uid = parseInt(match.replace(/[^0-9]/g, ''));
+            const member = conversation.members?.find(m => m.user_id === uid);
+            let name = member?.user_display_name;
+            if (uid === currentUser?.id) name = 'You';
+            parsed = parsed.replace(match, name || `User ${uid}`);
+          });
+        }
+      }
+      previewText = parsed;
     } else if (lastMsg.sender_id === currentUser?.id) {
       previewText = `You: ${lastMsg.body || ''}`;
     } else {

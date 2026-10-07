@@ -35,7 +35,7 @@ export const Avatar: React.FC<AvatarProps> = ({ src, initials, size = 'md', isOn
         {src ? (
           <>
             {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img src={src} alt="Avatar" className="w-full h-full object-cover" />
+            <img src={src.startsWith('/') ? `${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8001'}${src}` : src} alt="Avatar" className="w-full h-full object-cover" />
           </>
         ) : (
           <span>{initials?.substring(0, 2).toUpperCase() || '?'}</span>

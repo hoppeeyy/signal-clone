@@ -163,11 +163,15 @@ export const ChatHeader = memo(({ conversation }: ChatHeaderProps) => {
     setDropdownOpen(false);
     const otherUser = conversation.members?.find(m => m.user_id !== currentUser?.id);
     if (!otherUser) return;
+    
+    const nickname = window.prompt('Enter name for this contact:', otherUser.user_display_name || '');
+    if (nickname === null) return; // User cancelled
+    
     try {
       // Try phone/username — use user_id via a dedicated endpoint if available
       await fetchApi('/contacts', {
         method: 'POST',
-        body: JSON.stringify({ identifier: String(otherUser.user_id), nickname: otherUser.user_display_name })
+        body: JSON.stringify({ identifier: String(otherUser.user_id), nickname: nickname.trim() || undefined })
       });
       setIsSavedContact(true);
       toast('Contact saved', 'success');

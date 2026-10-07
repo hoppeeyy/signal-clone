@@ -174,7 +174,7 @@ export const MessageList = ({ conversation, onReply }: MessageListProps) => {
             const uid = parseInt(match[1]);
             const member = conversation.members?.find(m => m.user_id === uid);
             let name = member?.user_display_name;
-            if (!name && uid === currentUser?.id) name = 'You';
+            if (uid === currentUser?.id) name = 'You';
             return <strong key={idx} className="font-semibold text-theme-text">{name || `User ${uid}`}</strong>;
           }
           return part;
