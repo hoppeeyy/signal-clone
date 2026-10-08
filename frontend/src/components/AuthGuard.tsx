@@ -9,6 +9,12 @@ export const AuthGuard = ({ children }: { children: React.ReactNode }) => {
   const pathname = usePathname();
 
   useEffect(() => {
+    // Fire and forget health check to wake up the server (e.g. Render free tier)
+    const healthUrl = (process.env.NEXT_PUBLIC_API_URL as string).replace(/\/api$/, '') + '/health';
+    fetch(healthUrl).catch(() => {});
+  }, []);
+
+  useEffect(() => {
     if (!_hasHydrated) return;
 
     const isAuthRoute = pathname.startsWith('/login') || pathname.startsWith('/verify');

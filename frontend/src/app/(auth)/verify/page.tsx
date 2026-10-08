@@ -3,7 +3,7 @@
 import { useState, useRef, useEffect, KeyboardEvent, ClipboardEvent } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuthStore } from '@/store/auth';
-import { fetchApi } from '@/lib/api';
+import { fetchApi, useServerState } from '@/lib/api';
 import { useToast } from '@/components/ui/Toast';
 import { Button } from '@/components/ui/Button';
 import { AuthResponse } from '@/lib/types';
@@ -12,6 +12,7 @@ import { cn } from '@/components/ui/Button';
 export default function VerifyPage() {
   const pendingIdentifier = useAuthStore((s) => s.pendingIdentifier);
   const setAuth = useAuthStore((s) => s.setAuth);
+  const isWaking = useServerState((s) => s.isWaking);
   
   const [code, setCode] = useState<string[]>(Array(6).fill(''));
   const [loading, setLoading] = useState(false);
@@ -169,6 +170,13 @@ export default function VerifyPage() {
             {countdown > 0 ? `Resend code in ${countdown}s` : 'Resend code'}
           </Button>
         </div>
+
+        {isWaking && (
+          <div className="flex items-center justify-center gap-2 mt-6 text-theme-text-secondary text-sm animate-in fade-in">
+            <div className="animate-spin w-4 h-4 border-2 border-theme-primary border-t-transparent rounded-full" />
+            <span className="text-center">Waking up the server. This can take up to a minute on the free tier...</span>
+          </div>
+        )}
       </div>
     </div>
   );

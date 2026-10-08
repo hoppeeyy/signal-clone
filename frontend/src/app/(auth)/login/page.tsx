@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuthStore } from '@/store/auth';
-import { fetchApi } from '@/lib/api';
+import { fetchApi, useServerState } from '@/lib/api';
 import { useToast } from '@/components/ui/Toast';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
@@ -15,6 +15,7 @@ export default function LoginPage() {
   const router = useRouter();
   const toast = useToast();
   const setPendingIdentifier = useAuthStore((s) => s.setPendingIdentifier);
+  const isWaking = useServerState((s) => s.isWaking);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -54,10 +55,17 @@ export default function LoginPage() {
             value={identifier}
             onChange={(e) => setIdentifier(e.target.value)}
           />
-          <Button type="submit" isLoading={loading} className="w-full h-12 text-base">
+          <Button type="submit" isLoading={loading && !isWaking} disabled={loading} className="w-full h-12 text-base">
             Continue
           </Button>
         </form>
+        
+        {isWaking && (
+          <div className="flex items-center justify-center gap-2 mt-6 text-theme-text-secondary text-sm animate-in fade-in">
+            <div className="animate-spin w-4 h-4 border-2 border-theme-primary border-t-transparent rounded-full" />
+            <span className="text-center">Waking up the server. This can take up to a minute on the free tier...</span>
+          </div>
+        )}
       </div>
     </div>
   );

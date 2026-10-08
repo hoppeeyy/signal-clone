@@ -67,14 +67,8 @@ export const Sidebar = () => {
       <SidebarHeader />
       
       {wsStatus !== 'open' && (
-        <div 
-          className={`w-full text-center py-1 text-xs font-medium ${
-            wsStatus === 'connecting' 
-              ? 'bg-blue-100 text-blue-800 dark:bg-blue-900/50 dark:text-blue-200' 
-              : 'bg-amber-100 text-amber-800 dark:bg-amber-900/50 dark:text-amber-200'
-          }`}
-        >
-          {wsStatus === 'connecting' ? 'Connecting...' : 'Disconnected, retrying...'}
+        <div className="w-full text-center py-1 text-xs font-medium bg-blue-100 text-blue-800 dark:bg-blue-900/50 dark:text-blue-200">
+          Connecting...
         </div>
       )}
 
