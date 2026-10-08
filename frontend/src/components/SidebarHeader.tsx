@@ -5,10 +5,11 @@ import { useAuthStore } from '@/store/auth';
 import { fetchApi } from '@/lib/api';
 import { Avatar } from '@/components/ui/Avatar';
 import { IconButton } from '@/components/ui/IconButton';
-import { PenSquare, Settings, LogOut } from 'lucide-react';
+import { PenSquare, Settings, LogOut, UserPlus } from 'lucide-react';
 import { SearchBar } from '@/components/ui/SearchBar';
 import { NewChatModal } from './NewChatModal';
 import { SettingsModal } from './SettingsModal';
+import { AddContactModal } from './AddContactModal';
 import { useChatsStore } from '@/store/chats';
 import { useToast } from '@/components/ui/Toast';
 
@@ -19,6 +20,7 @@ export const SidebarHeader = () => {
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const [newChatOpen, setNewChatOpen] = useState(false);
   const [settingsOpen, setSettingsOpen] = useState(false);
+  const [addContactOpen, setAddContactOpen] = useState(false);
   
   const dropdownRef = useRef<HTMLDivElement>(null);
   const router = useRouter();
@@ -80,13 +82,18 @@ export const SidebarHeader = () => {
           <SearchBar value={searchQuery} onChange={setSearchQuery} />
         </div>
 
-        <IconButton onClick={() => setNewChatOpen(true)}>
+        <IconButton onClick={() => setAddContactOpen(true)} title="Add Contact">
+          <UserPlus className="w-5 h-5" />
+        </IconButton>
+
+        <IconButton onClick={() => setNewChatOpen(true)} title="New Chat">
           <PenSquare className="w-5 h-5" />
         </IconButton>
       </div>
 
       <NewChatModal isOpen={newChatOpen} onClose={() => setNewChatOpen(false)} />
       <SettingsModal isOpen={settingsOpen} onClose={() => setSettingsOpen(false)} />
+      <AddContactModal isOpen={addContactOpen} onClose={() => setAddContactOpen(false)} />
     </>
   );
 };
