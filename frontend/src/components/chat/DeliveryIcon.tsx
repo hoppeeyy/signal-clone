@@ -16,8 +16,7 @@ export const DeliveryIcon = memo(({ status }: DeliveryIconProps) => {
   if (status === 'sent') {
     return (
       <svg width="14" height="14" viewBox="0 0 14 14" fill="none" className="opacity-70">
-        <circle cx="7" cy="7" r="6" stroke="currentColor" strokeWidth="1.2" />
-        <path d="M4 7.5L6 9.5L10 4.5" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round" />
+        <path d="M3 7.5L6 10.5L11 4.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
       </svg>
     );
   }
@@ -25,10 +24,8 @@ export const DeliveryIcon = memo(({ status }: DeliveryIconProps) => {
   if (status === 'delivered') {
     return (
       <svg width="14" height="14" viewBox="0 0 14 14" fill="none" className="opacity-70">
-        <circle cx="5" cy="7" r="4.5" stroke="currentColor" strokeWidth="1" />
-        <circle cx="9" cy="7" r="4.5" stroke="currentColor" strokeWidth="1" />
-        <path d="M3 7.5L4.5 9L7.5 5" stroke="currentColor" strokeWidth="1" strokeLinecap="round" strokeLinejoin="round" />
-        <path d="M7 7.5L8.5 9L11.5 5" stroke="currentColor" strokeWidth="1" strokeLinecap="round" strokeLinejoin="round" />
+        <path d="M1 7.5L3.5 10L7.5 5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+        <path d="M6 7.5L8.5 10L12.5 5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
       </svg>
     );
   }
