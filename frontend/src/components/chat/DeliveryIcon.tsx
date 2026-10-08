@@ -1,10 +1,12 @@
-import { memo } from 'react';
+import { memo, useId } from 'react';
 
 interface DeliveryIconProps {
   status: 'sending' | 'sent' | 'delivered' | 'read' | 'failed';
 }
 
 export const DeliveryIcon = memo(({ status }: DeliveryIconProps) => {
+  const maskId = useId();
+
   if (status === 'sending') {
     return (
       <svg width="14" height="14" viewBox="0 0 14 14" fill="none" className="animate-spin opacity-70">
@@ -32,11 +34,16 @@ export const DeliveryIcon = memo(({ status }: DeliveryIconProps) => {
 
   if (status === 'read') {
     return (
-      <svg width="14" height="14" viewBox="0 0 14 14" fill="none" className="opacity-90">
-        <circle cx="5" cy="7" r="4.5" fill="currentColor" />
-        <circle cx="9" cy="7" r="4.5" fill="currentColor" />
-        <path d="M3 7.5L4.5 9L7.5 5" stroke="white" strokeWidth="1" strokeLinecap="round" strokeLinejoin="round" />
-        <path d="M7 7.5L8.5 9L11.5 5" stroke="white" strokeWidth="1" strokeLinecap="round" strokeLinejoin="round" />
+      <svg width="14" height="14" viewBox="0 0 14 14" fill="none" className="opacity-100">
+        <defs>
+          <mask id={maskId}>
+            <rect width="14" height="14" fill="white" />
+            <path d="M1 7.5L3.5 10L7.5 5" stroke="black" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+            <path d="M6 7.5L8.5 10L12.5 5" stroke="black" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+          </mask>
+        </defs>
+        <circle cx="4.5" cy="7.5" r="4.5" fill="currentColor" mask={`url(#${maskId})`} />
+        <circle cx="9.5" cy="7.5" r="4.5" fill="currentColor" mask={`url(#${maskId})`} />
       </svg>
     );
   }
