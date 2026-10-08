@@ -2,9 +2,9 @@
 
 A full-stack, real-time messaging application inspired by Signal — built with **Next.js 14**, **FastAPI**, and **WebSockets**. Supports end-to-end encrypted-style UX, group chats, file/image attachments, read receipts, reactions, typing indicators, presence, and more.
 
-> **GitHub Repo:** [https://github.com/hoppeeyy/signal-clone](https://github.com/hoppeeyy/signal-clone)
-> **Live Demo:** [https://signal-clone-murex-xi.vercel.app](https://signal-clone-murex-xi.vercel.app)
-> **Backend Health Check:** [https://signal-clone-backend-zwqi.onrender.com/health](https://signal-clone-backend-zwqi.onrender.com/health)
+- **GitHub Repo:** [https://github.com/hoppeeyy/signal-clone](https://github.com/hoppeeyy/signal-clone)
+- **Live Demo:** [https://signal-clone-murex-xi.vercel.app](https://signal-clone-murex-xi.vercel.app)
+- **Backend Health Check:** [https://signal-clone-backend-zwqi.onrender.com/health](https://signal-clone-backend-zwqi.onrender.com/health)
 
 ---
 
