@@ -2,10 +2,14 @@ from sqlalchemy.orm import Session
 from app.models.models import Conversation, ConversationMember, User, Message, ConversationType, MemberRole, MessageType, ReceiptStatus, MessageReceipt, Contact
 
 def get_conversations(db: Session, user_id: int, q: str = None):
+    from sqlalchemy.orm import selectinload
+
     # Find conversations where the user is a member
     member_subq = db.query(ConversationMember.conversation_id).filter(ConversationMember.user_id == user_id).subquery()
     
-    query = db.query(Conversation).filter(Conversation.id.in_(member_subq)).order_by(Conversation.updated_at.desc())
+    query = db.query(Conversation).options(
+        selectinload(Conversation.members).selectinload(ConversationMember.user)
+    ).filter(Conversation.id.in_(member_subq)).order_by(Conversation.updated_at.desc())
     conversations = query.all()
     
     # Pre-fetch contacts for nickname resolution

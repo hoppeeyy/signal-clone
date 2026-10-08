@@ -207,10 +207,18 @@ async def send_message_ws_logic(db: Session, conv_id: int, sender_id: int, body:
         selectinload(Message.attachments)
     ).filter(Message.id == msg.id).first()
 
+    # Fetch all contacts for all members in one query to avoid N+1 queries during broadcast
+    all_contacts = db.query(Contact).filter(Contact.owner_id.in_(member_ids)).all()
+    all_contacts_map = {}
+    for c in all_contacts:
+        if c.nickname:
+            if c.owner_id not in all_contacts_map:
+                all_contacts_map[c.owner_id] = {}
+            all_contacts_map[c.owner_id][c.contact_user_id] = c.nickname
+
     # Broadcast to others
     for uid in member_ids:
-        contacts = db.query(Contact).filter(Contact.owner_id == uid).all()
-        contact_map = {c.contact_user_id: c.nickname for c in contacts if c.nickname}
+        contact_map = all_contacts_map.get(uid, {})
         other_msg_dict = format_message(msg, uid, conv, contact_map)
         await manager.send_to_user(uid, {
             "type": "new_message",
