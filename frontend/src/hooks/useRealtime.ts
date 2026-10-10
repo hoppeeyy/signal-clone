@@ -108,6 +108,7 @@ export function useRealtime() {
             unread_count: 0,
           });
         }
+      } else {
         const currentMember = conv?.members?.find((m) => m.user_id === currentUser?.id);
         const isMuted = currentMember?.muted || false;
 
@@ -133,7 +134,7 @@ export function useRealtime() {
           fetchConversations();
         }
 
-        const unreadConvs = useChatsStore.getState().conversations.reduce((sum, c) => sum + c.unread_count, 1);
+        const unreadConvs = useChatsStore.getState().conversations.reduce((sum, c) => sum + c.unread_count, 0) + (conv ? 1 : 1);
         document.title = `Signal Clone (${unreadConvs})`;
       }
     });

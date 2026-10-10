@@ -226,6 +226,7 @@ The frontend maintains a single persistent WebSocket connection at `/ws?token=<j
 | `messages` | All messages — text, system, attachment |
 | `message_receipts` | Per-user delivery and read timestamps |
 | `reactions` | Emoji reactions with user references |
+| `message_hidden` | Tracks which users have deleted messages for themselves |
 | `attachments` | Uploaded files linked to messages |
 | `contacts` | User address book entries |
 
